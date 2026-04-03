@@ -1,9 +1,14 @@
 import fs from 'fs/promises'
 import path from 'path'
-import { exec } from 'child_process'
-import { promisify } from 'util'
 import fetch from 'node-fetch'
 import fg from 'fast-glob'
+import {
+  executeBashCommand,
+  getBashExecutionHistory,
+  previewSedInlineCommand,
+  replayBashCommand,
+} from './bash/engine.js'
+import { parseSedInlineEdit } from './bash/sedParser.js'
 import {
   addTodo,
   clearWorkflowState,
@@ -12,8 +17,6 @@ import {
   saveWorkflowState,
   updateTodo,
 } from './store.js'
-
-const execp = promisify(exec)
 
 export type ToolResult = { ok: boolean; output?: any }
 
@@ -59,7 +62,6 @@ const PROJECT_ROOT = process.env.PROJECT_ROOT
 
 const ALLOW_BASH_EXEC = String(process.env.ALLOW_BASH_EXEC || '').toLowerCase() === 'true'
 const ALLOW_WEB_FETCH = String(process.env.ALLOW_WEB_FETCH || '').toLowerCase() === 'true'
-const SAFE_CMD = /^(?:\s*)(?:echo|ls|dir|cat|type|pwd)\b/iu
 const MAX_FILE_BYTES = Number(process.env.MAX_FILE_BYTES || 512 * 1024)
 const WEB_FETCH_ALLOWLIST = String(process.env.WEB_FETCH_ALLOWLIST || '')
   .split(',')
@@ -95,6 +97,7 @@ function requiresExplicitUserApproval(tool: string) {
     tool === 'directory_create' ||
     tool === 'bash_exec' ||
     tool === 'bash.exec' ||
+    tool === 'bash_replay' ||
     tool === 'web_fetch'
   )
 }
@@ -109,7 +112,9 @@ function isReadOnlyTool(tool: string) {
     tool === 'workflow_get' ||
     tool === 'env_get' ||
     tool === 'pwd' ||
-    tool === 'ls_safe'
+    tool === 'ls_safe' ||
+    tool === 'bash_history' ||
+    tool === 'bash_sed_preview'
   )
 }
 
@@ -414,6 +419,53 @@ export const toolDefinitions = [
   },
   {
     type: 'function',
+    name: 'bash_history',
+    description: 'List recent bash executions with classification and replay references.',
+    parameters: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Max entries to return (default 50).',
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    type: 'function',
+    name: 'bash_replay',
+    description: 'Replay a previous bash command by history id.',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description: 'History id from bash_history, e.g. bash_12.',
+        },
+      },
+      required: ['id'],
+      additionalProperties: false,
+    },
+  },
+  {
+    type: 'function',
+    name: 'bash_sed_preview',
+    description: 'Preview sed -i substitution impact without writing file changes.',
+    parameters: {
+      type: 'object',
+      properties: {
+        cmd: {
+          type: 'string',
+          description: 'sed command like: sed -i "s/old/new/g" path/file.txt',
+        },
+      },
+      required: ['cmd'],
+      additionalProperties: false,
+    },
+  },
+  {
+    type: 'function',
     name: 'web_fetch',
     description: 'Fetch a URL (GET). Optional allowlist via WEB_FETCH_ALLOWLIST.',
     parameters: {
@@ -598,6 +650,24 @@ export function getToolStatuses(context?: Pick<ToolContext, 'permissionMode'>): 
       enabled: ALLOW_BASH_EXEC,
       category: 'execution',
       reason: ALLOW_BASH_EXEC ? 'enabled by ALLOW_BASH_EXEC=true' : 'disabled by ALLOW_BASH_EXEC=false',
+    }),
+    annotate('bash_history', {
+      name: 'bash_history',
+      enabled: ALLOW_BASH_EXEC,
+      category: 'execution',
+      reason: ALLOW_BASH_EXEC ? 'bash history available' : 'disabled with bash execution',
+    }),
+    annotate('bash_replay', {
+      name: 'bash_replay',
+      enabled: ALLOW_BASH_EXEC,
+      category: 'execution',
+      reason: ALLOW_BASH_EXEC ? 'replay enabled' : 'disabled with bash execution',
+    }),
+    annotate('bash_sed_preview', {
+      name: 'bash_sed_preview',
+      enabled: ALLOW_BASH_EXEC,
+      category: 'execution',
+      reason: ALLOW_BASH_EXEC ? 'safe preview enabled' : 'disabled with bash execution',
     }),
     annotate('web_fetch', {
       name: 'web_fetch',
@@ -785,11 +855,63 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
 
   if (tool === 'bash_exec' || tool === 'bash.exec') {
     if (!ALLOW_BASH_EXEC) throw new Error('bash.exec disabled (set ALLOW_BASH_EXEC=true to enable)')
-    const cmd = input?.cmd
+    const cmd = input?.cmd ?? input?.command
     if (!cmd) throw new Error('input.cmd required')
-    if (!SAFE_CMD.test(String(cmd))) throw new Error('command not allowed')
-    const { stdout, stderr } = await execp(cmd, { cwd: PROJECT_ROOT })
-    return { ok: true, output: { stdout, stderr } }
+    const result = await executeBashCommand({
+      command: String(cmd),
+      cwd: PROJECT_ROOT,
+    })
+    return {
+      ok: true,
+      output: {
+        stdout: result.execution.stdout,
+        stderr: result.execution.stderr,
+        exitCode: result.execution.exitCode,
+        historyId: result.historyEntry.id,
+        classification: result.classification,
+        sandbox: result.execution.sandbox,
+      },
+    }
+  }
+
+  if (tool === 'bash_history') {
+    if (!ALLOW_BASH_EXEC) throw new Error('bash execution disabled')
+    const limit = Number(input?.limit || 50)
+    return { ok: true, output: getBashExecutionHistory(limit) }
+  }
+
+  if (tool === 'bash_replay') {
+    if (!ALLOW_BASH_EXEC) throw new Error('bash execution disabled')
+    const id = String(input?.id || '').trim()
+    if (!id) throw new Error('input.id required')
+    const replay = await replayBashCommand(id, PROJECT_ROOT)
+    return {
+      ok: true,
+      output: {
+        stdout: replay.execution.stdout,
+        stderr: replay.execution.stderr,
+        exitCode: replay.execution.exitCode,
+        historyId: replay.historyEntry.id,
+        replayOf: replay.historyEntry.replayOf,
+        classification: replay.classification,
+        sandbox: replay.execution.sandbox,
+      },
+    }
+  }
+
+  if (tool === 'bash_sed_preview') {
+    if (!ALLOW_BASH_EXEC) throw new Error('bash execution disabled')
+    const cmd = String(input?.cmd || '').trim()
+    if (!cmd) throw new Error('input.cmd required')
+
+    const edit = parseSedInlineEdit(cmd)
+    if (!edit) {
+      throw new Error('unsupported sed preview command')
+    }
+
+    assertAllowedPath(edit.filePath, context)
+    const preview = await previewSedInlineCommand(cmd, PROJECT_ROOT)
+    return { ok: true, output: preview }
   }
 
   if (tool === 'web_fetch') {

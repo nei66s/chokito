@@ -1,6 +1,6 @@
 # Chocks: Roadmap Detalhado
 
-**Status Atual**: Fase 1 (MVP) COMPLETA ✅
+**Status Atual**: Fase 3 (Bash Security) COMPLETA ✅
 
 Veja [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) para detalhes da conclusão.
 
@@ -16,6 +16,18 @@ Entrega: Chocks funcional para equipes internas pequenas.
 - Workflow operations (reset, archive, resume, edit steps)
 - npm run dev funcionando sem erros
 - Build passar com zero erros TypeScript
+
+## Fase 3: Bash Security ✅ (Completado)
+
+Entrega: execucao de shell com camadas de seguranca e rastreabilidade.
+
+Implementado:
+- parser AST basico para comando bash (`src/bash/ast.ts`)
+- classificador de risco (`safe`/`review`/`blocked`) em `src/bash/classifier.ts`
+- adaptador de sandbox por plataforma (`bubblewrap` Linux, `seatbelt` macOS, fallback controlado)
+- preview seguro de `sed -i` sem escrita (`src/bash/sedParser.ts` + `bash_sed_preview`)
+- historico e replay de comandos (`src/bash/history.ts`, `bash_history`, `bash_replay`)
+- integracao com permission pipeline e `bash_exec` no `runTool`
 
 ## Ja implementado
 

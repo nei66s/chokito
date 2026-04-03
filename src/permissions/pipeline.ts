@@ -12,6 +12,7 @@
  */
 
 import type { ToolContext } from '../tools.js'
+import { classifyBashCommand } from '../bash/classifier.js'
 
 export interface PermissionContext extends ToolContext {
   approvedRules?: string[]
@@ -96,14 +97,21 @@ class PermissionPipeline {
     }
 
     // Block certain bash commands globally
-    if (tool === 'bash_exec') {
-      const cmd = input?.command || ''
-      if (typeof cmd === 'string' && /\b(rm\s+-rf|dd\s+if=|:()\s*{|fork\(\)|ping|curl|wget)\b/i.test(cmd)) {
-        // Blacklist some dangerous patterns
+    if (tool === 'bash_exec' || tool === 'bash.exec') {
+      const cmd = input?.cmd ?? input?.command ?? ''
+      if (typeof cmd === 'string' && cmd.trim()) {
+        const classification = classifyBashCommand(cmd)
+        if (classification.risk === 'blocked') {
+          return {
+            allowed: false,
+            reason: classification.reason || 'Blocked command pattern',
+            step: 4,
+          }
+        }
         if (context.permissionMode === 'read_only') {
           return {
             allowed: false,
-            reason: 'Command blocked in read-only mode',
+            reason: 'bash execution is disabled in read-only mode',
             step: 4,
           }
         }
@@ -116,7 +124,7 @@ class PermissionPipeline {
   // Step 5: Requires interaction
   async step5_RequiresInteraction(tool: string, context: PermissionContext): Promise<PermissionCheckResult> {
     // Certain tools absolutely require user interaction (no auto-execute)
-    const requiresInteraction = ['file_delete', 'bash_exec', 'web_fetch']
+    const requiresInteraction = ['file_delete', 'bash_exec', 'bash_replay', 'web_fetch']
 
     if (requiresInteraction.includes(tool) && context.permissionMode === 'ask') {
       // In ask mode, always require explicit approval

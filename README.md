@@ -4,6 +4,12 @@ Minimal agent server with a local-first web UI. **Production-ready for internal 
 
 **Status**: Fase 1 (MVP) completada. Veja [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) e [IMPLEMENTATION_ROADMAP.md](./IMPLEMENTATION_ROADMAP.md) para roadmap futuro.
 
+## GitHub About Metadata
+
+- Description: Chokito is a TypeScript local-first coding agent with permission pipeline, hooks, workflow tracking, and secure bash execution.
+- Website: https://github.com/nei66s/chokito/tree/main/agent-ts/chokito
+- Topics: typescript, openai, ai-agent, coding-agent, permission-pipeline, workflow, hooks, bash-security, express, postgres
+
 Main endpoints:
 
 - `GET /conversations` - lists persisted conversations from Postgres
