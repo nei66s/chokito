@@ -1,0 +1,23 @@
+{
+  "id": "sample.assistant-pack",
+  "name": "Sample Assistant Pack",
+  "version": "0.1.0",
+  "enabled": true,
+  "description": "Plugin de exemplo com capabilities de skill e agent.",
+  "author": "local-dev",
+  "dependencies": ["sample.echo-tools"],
+  "capabilities": [
+    {
+      "type": "skill",
+      "name": "diagnostics_skill",
+      "entry": "./skills/diagnostics/SKILL.md",
+      "description": "Skill markdown de exemplo."
+    },
+    {
+      "type": "agent",
+      "name": "review_assistant",
+      "entry": "./agents/review-assistant.md",
+      "description": "Agent markdown de exemplo."
+    }
+  ]
+}

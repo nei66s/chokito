@@ -19,8 +19,21 @@ import { getToolStatuses, runTool, type PermissionMode } from './tools.js'
 import { moderateText } from './moderation.js'
 import { initPermissionPipeline, getPermissionPipeline } from './permissions/index.js'
 import { initDefaultRules } from './permissions/defaults.js'
-import { initHooks } from './hooks/index.js'
+import { getHookRegistry, initHooks } from './hooks/index.js'
 import { AuditLogger } from './audit/logger.js'
+import {
+  deletePluginManifest,
+  getPluginRuntime,
+  getPluginRegistry,
+  hydrateRegistryFromStorage,
+  initPluginRegistry,
+  initPluginRuntime,
+  initPluginStorage,
+  loadPluginsFromDirectory,
+  setPluginEnabled,
+  upsertPluginManifest,
+  validatePluginManifest,
+} from './plugins/index.js'
 
 dotenv.config()
 
@@ -29,6 +42,9 @@ const __dirname = path.dirname(__filename)
 const PROJECT_ROOT = process.env.PROJECT_ROOT
   ? path.resolve(process.env.PROJECT_ROOT)
   : path.resolve(process.cwd(), '..')
+const PLUGINS_ROOT = process.env.PLUGINS_ROOT
+  ? path.resolve(process.env.PLUGINS_ROOT)
+  : path.resolve(process.cwd(), 'plugins')
 
 const app = express()
 app.use(express.json())
@@ -68,6 +84,28 @@ function getApprovedTools(req: Request) {
         .filter(Boolean)
 
   return rawItems.map((item: unknown) => String(item || '').trim()).filter(Boolean)
+}
+
+async function executeToolWithPlugins(tool: string, input: unknown, context: {
+  chatId?: string
+  userId?: string
+  displayName?: string
+  fullAccess?: boolean
+  permissionMode?: PermissionMode
+  latestUserMessage?: string
+  approvedTools?: string[]
+} = {}) {
+  const pluginRuntime = getPluginRuntime()
+  if (pluginRuntime.hasTool(tool)) {
+    return pluginRuntime.runTool(tool, input, context)
+  }
+  return runTool(tool, input, context)
+}
+
+async function syncPluginRuntimeFromRegistry() {
+  const pluginRuntime = getPluginRuntime()
+  await pluginRuntime.syncWithRegistry()
+  return pluginRuntime.getRuntimeStatus()
 }
 
 function resolveRequestedPathForFiles(req: Request, targetPath: string) {
@@ -476,6 +514,7 @@ app.post('/chat', async (req: Request, res: Response) => {
 
     const user = getRequestUser(req)
     const latestUserMessage = getLastUserMessageText(messages)
+    const pluginRuntime = getPluginRuntime()
     const result = await runAgent(messages, {
       chatId,
       userId: user.id,
@@ -484,6 +523,9 @@ app.post('/chat', async (req: Request, res: Response) => {
       permissionMode: getPermissionMode(req),
       latestUserMessage,
       approvedTools: getApprovedTools(req),
+    }, {
+      extraToolDefinitions: pluginRuntime.listToolDefinitions(),
+      executeTool: executeToolWithPlugins,
     })
     res.json({
       output_text: result.response.output_text,
@@ -551,6 +593,7 @@ app.post('/chat/stream', async (req: Request, res: Response) => {
 
     const user = getRequestUser(req)
     const latestUserMessage = getLastUserMessageText(messages)
+    const pluginRuntime = getPluginRuntime()
     const result = await streamAgent(messages, {
       chatId,
       userId: user.id,
@@ -562,6 +605,9 @@ app.post('/chat/stream', async (req: Request, res: Response) => {
     }, {
       onTextDelta: (delta) => sendEvent('text-delta', { delta }),
       onTrace: (entry) => sendEvent('trace', entry),
+    }, {
+      extraToolDefinitions: pluginRuntime.listToolDefinitions(),
+      executeTool: executeToolWithPlugins,
     })
 
     sendEvent('done', {
@@ -608,32 +654,28 @@ app.post('/tools/run', async (req: Request, res: Response) => {
     }
 
     // Dispatch PreToolUse hook
-    const hookRegistry = require('./hooks/index.js').getHookRegistry?.() || null
-    if (hookRegistry) {
-      await hookRegistry.dispatch({
-        type: 'PreToolUse',
-        timestamp: new Date().toISOString(),
-        userId: user.id,
-        chatId,
-        data: { tool, input },
-      })
-    }
+    const hookRegistry = getHookRegistry()
+    await hookRegistry.dispatch({
+      type: 'PreToolUse',
+      timestamp: new Date().toISOString(),
+      userId: user.id,
+      chatId,
+      data: { tool, input },
+    })
 
-    const out = await runTool(tool, input, context)
+    const out = await executeToolWithPlugins(tool, input, context)
     
     // Log successful execution
     AuditLogger.logToolExecution(tool, input, out, user.id, chatId)
 
     // Dispatch PostToolUse hook
-    if (hookRegistry) {
-      await hookRegistry.dispatch({
-        type: 'PostToolUse',
-        timestamp: new Date().toISOString(),
-        userId: user.id,
-        chatId,
-        data: { tool, input, output: out },
-      })
-    }
+    await hookRegistry.dispatch({
+      type: 'PostToolUse',
+      timestamp: new Date().toISOString(),
+      userId: user.id,
+      chatId,
+      data: { tool, input, output: out },
+    })
 
     res.json(out)
   } catch (err) {
@@ -654,9 +696,20 @@ app.post('/tools/run', async (req: Request, res: Response) => {
 })
 
 app.get('/tools/status', (req: Request, res: Response) => {
+  const pluginRuntime = getPluginRuntime()
+  const pluginTools = pluginRuntime.listToolDefinitions().map((tool) => ({
+    name: tool.name,
+    enabled: true,
+    category: 'plugin',
+    reason: 'provided by plugin runtime',
+  }))
+
   res.json({
     permissionMode: getPermissionMode(req),
-    tools: getToolStatuses({ permissionMode: getPermissionMode(req) }),
+    tools: [
+      ...getToolStatuses({ permissionMode: getPermissionMode(req) }),
+      ...pluginTools,
+    ],
   })
 })
 
@@ -688,6 +741,123 @@ app.get('/audit/stats', async (req: Request, res: Response) => {
   try {
     const stats = AuditLogger.getStats()
     res.json({ stats })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+app.get('/plugins', async (_req: Request, res: Response) => {
+  try {
+    const registry = getPluginRegistry()
+    const plugins = registry.list()
+    const runtime = getPluginRuntime().getRuntimeStatus()
+    res.json({
+      plugins,
+      count: plugins.length,
+      runtime,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+app.post('/plugins/register', async (req: Request, res: Response) => {
+  try {
+    const inputManifest = req.body?.manifest ?? req.body
+    const manifest = validatePluginManifest(inputManifest)
+
+    if (typeof req.body?.source === 'string' && req.body.source.trim()) {
+      manifest.source = req.body.source.trim()
+    }
+
+    const registry = getPluginRegistry()
+    registry.register(manifest, { overwrite: true })
+    await upsertPluginManifest(manifest)
+    await syncPluginRuntimeFromRegistry()
+
+    res.status(201).json({ plugin: manifest })
+  } catch (err) {
+    res.status(400).json({ error: String(err) })
+  }
+})
+
+app.patch('/plugins/:id/enabled', async (req: Request, res: Response) => {
+  const pluginId = String(req.params.id || '').trim()
+  if (!pluginId) return res.status(400).json({ error: 'plugin id required' })
+
+  if (typeof req.body?.enabled !== 'boolean') {
+    return res.status(400).json({ error: 'enabled (boolean) is required' })
+  }
+
+  try {
+    const registry = getPluginRegistry()
+    const plugin = registry.setEnabled(pluginId, req.body.enabled)
+    await setPluginEnabled(pluginId, req.body.enabled)
+    await syncPluginRuntimeFromRegistry()
+    res.json({ plugin })
+  } catch (err) {
+    const message = String(err)
+    if (message.includes('plugin not found')) {
+      return res.status(404).json({ error: message })
+    }
+    return res.status(500).json({ error: message })
+  }
+})
+
+app.delete('/plugins/:id', async (req: Request, res: Response) => {
+  const pluginId = String(req.params.id || '').trim()
+  if (!pluginId) return res.status(400).json({ error: 'plugin id required' })
+
+  try {
+    const registry = getPluginRegistry()
+    const removed = registry.unregister(pluginId)
+    await deletePluginManifest(pluginId)
+    await syncPluginRuntimeFromRegistry()
+
+    if (!removed) {
+      return res.status(404).json({ error: `plugin not found: ${pluginId}` })
+    }
+
+    return res.json({ ok: true, pluginId })
+  } catch (err) {
+    return res.status(500).json({ error: String(err) })
+  }
+})
+
+app.post('/plugins/reload', async (req: Request, res: Response) => {
+  const requestedDirectory = typeof req.body?.directory === 'string' ? req.body.directory.trim() : ''
+  const targetDirectory = requestedDirectory ? path.resolve(requestedDirectory) : PLUGINS_ROOT
+
+  try {
+    const report = await loadPluginsFromDirectory(targetDirectory)
+    const registry = getPluginRegistry()
+    let persisted = 0
+
+    for (const entry of report.loaded) {
+      registry.register(entry.manifest, { overwrite: true })
+      await upsertPluginManifest(entry.manifest)
+      persisted += 1
+    }
+
+    const runtime = await syncPluginRuntimeFromRegistry()
+
+    res.json({
+      directory: targetDirectory,
+      loaded: report.loaded.length,
+      failed: report.failed,
+      persisted,
+      plugins: registry.list(),
+      runtime,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+app.get('/plugins/runtime', async (_req: Request, res: Response) => {
+  try {
+    const runtime = getPluginRuntime().getRuntimeStatus()
+    res.json({ runtime })
   } catch (err) {
     res.status(500).json({ error: String(err) })
   }
@@ -755,10 +925,33 @@ const port = process.env.PORT || 3000
 
 async function startServer() {
   await initDatabase()
+  await initPluginStorage()
+
+  const pluginRegistry = initPluginRegistry()
+  await hydrateRegistryFromStorage(pluginRegistry)
+  initHooks()
+  initPluginRuntime(pluginRegistry, PLUGINS_ROOT)
+
+  const autoLoadPlugins = String(process.env.PLUGINS_AUTOLOAD || 'true').toLowerCase() !== 'false'
+  if (autoLoadPlugins) {
+    const loadReport = await loadPluginsFromDirectory(PLUGINS_ROOT).catch((error) => {
+      const message = String(error)
+      if (message.includes('ENOENT')) {
+        return { loaded: [], failed: [] }
+      }
+      throw error
+    })
+
+    for (const entry of loadReport.loaded) {
+      pluginRegistry.register(entry.manifest, { overwrite: true })
+      await upsertPluginManifest(entry.manifest)
+    }
+  }
+
+  await syncPluginRuntimeFromRegistry()
   
   // Initialize Fase 2 infrastructure
   const pipeline = initPermissionPipeline()
-  initHooks()
   initDefaultRules(pipeline)
   
   app.listen(port, () => console.log(`Chocks listening on ${port}`))

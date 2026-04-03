@@ -46,6 +46,25 @@ type AgentContext = {
   approvedTools?: string[]
 }
 
+type DynamicToolDefinition = {
+  type: 'function'
+  name: string
+  description: string
+  parameters: {
+    type: 'object'
+    properties: Record<string, unknown>
+    required?: string[]
+    additionalProperties?: boolean
+  }
+}
+
+type ToolExecutor = (tool: string, input: any, context?: AgentContext) => Promise<any>
+
+type AgentRuntimeOptions = {
+  extraToolDefinitions?: DynamicToolDefinition[]
+  executeTool?: ToolExecutor
+}
+
 function buildSystemPrompt(context?: AgentContext) {
   const chatLabel = context?.chatId ? `Current conversation id: ${context.chatId}` : 'Current conversation id: global'
   const userLabel = context?.userId ? `Current owner id: ${context.userId}` : 'Current owner id: legacy-local'
@@ -64,11 +83,14 @@ function buildSystemPrompt(context?: AgentContext) {
 export async function runAgent(
   messages: Array<{ role: string; content: string }>,
   context?: AgentContext,
+  runtime?: AgentRuntimeOptions,
 ) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set in environment')
 
   const client = new OpenAI({ apiKey: OPENAI_KEY })
   const trace: ToolTraceEntry[] = []
+  const availableTools = [...toolDefinitions, ...(runtime?.extraToolDefinitions || [])]
+  const executeTool = runtime?.executeTool || runTool
 
   let response: any = await client.responses.create({
     model: MODEL,
@@ -76,7 +98,7 @@ export async function runAgent(
       { role: 'system', content: buildSystemPrompt(context) },
       ...messages,
     ] as any,
-    tools: toolDefinitions as any,
+    tools: availableTools as any,
     parallel_tool_calls: false,
   })
 
@@ -107,7 +129,7 @@ export async function runAgent(
       }
 
       try {
-        const result = await runTool(call.name, args, context)
+        const result = await executeTool(call.name, args, context)
         const output = JSON.stringify(result)
         trace.push({ type: 'tool_output', call_id: call.call_id, output })
         toolOutputs.push({
@@ -204,10 +226,13 @@ export async function streamAgent(
   messages: Array<{ role: string; content: string }>,
   context: AgentContext | undefined,
   callbacks: StreamCallbacks,
+  runtime?: AgentRuntimeOptions,
 ) {
   if (!OPENAI_KEY) throw new Error('OPENAI_API_KEY not set in environment')
 
   const trace: ToolTraceEntry[] = []
+  const availableTools = [...toolDefinitions, ...(runtime?.extraToolDefinitions || [])]
+  const executeTool = runtime?.executeTool || runTool
   let response: any = await createResponseStream(
     {
       model: MODEL,
@@ -215,7 +240,7 @@ export async function streamAgent(
         { role: 'system', content: buildSystemPrompt(context) },
         ...messages,
       ] as any,
-      tools: toolDefinitions as any,
+      tools: availableTools as any,
       parallel_tool_calls: false,
     },
     callbacks,
@@ -253,7 +278,7 @@ export async function streamAgent(
       }
 
       try {
-        const result = await runTool(call.name, args, context)
+        const result = await executeTool(call.name, args, context)
         const output = JSON.stringify(result)
         const outputEntry: ToolTraceEntry = { type: 'tool_output', call_id: call.call_id, output }
         trace.push(outputEntry)

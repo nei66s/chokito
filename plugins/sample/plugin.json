@@ -1,0 +1,23 @@
+{
+  "id": "sample.echo-tools",
+  "name": "Sample Echo Tools",
+  "version": "0.1.0",
+  "enabled": true,
+  "description": "Plugin de exemplo para validar loader e registry.",
+  "author": "local-dev",
+  "dependencies": [],
+  "capabilities": [
+    {
+      "type": "tool",
+      "name": "echo_ping",
+      "entry": "./dist/tools/echoPing.js",
+      "description": "Retorna pong para validar wiring de plugin."
+    },
+    {
+      "type": "hook",
+      "name": "audit_echo",
+      "entry": "./dist/hooks/auditEcho.js",
+      "description": "Hook de exemplo para auditoria."
+    }
+  ]
+}

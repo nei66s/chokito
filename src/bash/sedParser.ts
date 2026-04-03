@@ -69,7 +69,7 @@ export function parseSedInlineEdit(command: string): SedInlineEdit | null {
   const raw = String(command || '').trim()
   if (!raw) return null
 
-  const match = raw.match(/^sed\s+-i(?:''|\s+['\"][^'\"]*['\"])?\s+['\"]([^'\"]+)['\"]\s+(.+)$/u)
+  const match = raw.match(/^sed\s+-i(?:''|\s+['"][^'"]*['"])?\s+['"]([^'"]+)['"]\s+(.+)$/u)
   if (!match) return null
 
   const expression = parseSedExpression(match[1])

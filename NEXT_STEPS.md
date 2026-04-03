@@ -1,6 +1,6 @@
 # Chocks: Roadmap Detalhado
 
-**Status Atual**: Fase 3 (Bash Security) COMPLETA ✅
+**Status Atual**: Fase 4 (Plugin System) COMPLETA ✅
 
 Veja [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) para detalhes da conclusão.
 
@@ -28,6 +28,30 @@ Implementado:
 - preview seguro de `sed -i` sem escrita (`src/bash/sedParser.ts` + `bash_sed_preview`)
 - historico e replay de comandos (`src/bash/history.ts`, `bash_history`, `bash_replay`)
 - integracao com permission pipeline e `bash_exec` no `runTool`
+
+## Fase 4: Plugin System ✅ (Completado)
+
+Entrega: extensao do sistema via plugins com runtime ativo e hot-reload.
+
+Implementado:
+- manifest validado com schema tipado em `src/plugins/manifest.ts`
+- descoberta e carga de manifests por diretorio em `src/plugins/loader.ts`
+- registro e ciclo de vida de plugins em `src/plugins/registry.ts`
+- persistencia em Postgres (`plugin_manifests`) em `src/plugins/storage.ts`
+- runtime de plugins com ativacao/desativacao em `src/plugins/runtime.ts`
+- resolucao de dependencias com deteccao de ciclo/dependencia ausente
+- import dinamico de capabilities (`tool`, `hook`) com status por capability
+- suporte de metadata para `skill` e `agent` no runtime
+- endpoints de gerenciamento:
+  - `GET /plugins`
+  - `POST /plugins/register`
+  - `PATCH /plugins/:id/enabled`
+  - `DELETE /plugins/:id`
+  - `POST /plugins/reload`
+  - `GET /plugins/runtime`
+- tools de plugin expostas em `GET /tools/status`
+- tools de plugin executaveis em `POST /tools/run`
+- loop do agente (`/chat` e `/chat/stream`) com tool definitions dinamicas de plugins
 
 ## Ja implementado
 
@@ -230,8 +254,8 @@ Falta:
 
 Se continuar em ordem de valor real:
 
-1. Endurecer backend de permissoes por categoria/path e auditoria
-2. Melhorar UX de rename/move sem `prompt()`
+1. Fase 5: QueryEngine sofisticado (compaction, budgeting, cache, cost tracking)
+2. Endurecer backend de permissoes por categoria/path e auditoria
 3. Persistir arquivo de workflow no backend (nao so localStorage)
 4. MCP real
 5. Subagentes
