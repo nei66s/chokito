@@ -1,0 +1,5283 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Chocks</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,500;7..72,600&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap");
+
+      :root {
+        --bg: #23211f;
+        --sidebar: #1d1b19;
+        --panel: #2b2926;
+        --panel-soft: #262421;
+        --panel-strong: #32302d;
+        --line: rgba(255, 255, 255, 0.12);
+        --line-soft: rgba(255, 255, 255, 0.07);
+        --text: #f6f1e8;
+        --muted: #b9b1a5;
+        --muted-soft: #8f887d;
+        --accent: #d4a776;
+        --accent-soft: rgba(212, 167, 118, 0.16);
+        --surface-glass: rgba(255, 255, 255, 0.03);
+        --surface-raise: rgba(255, 255, 255, 0.05);
+        --scroll-track: rgba(255, 255, 255, 0.04);
+        --scroll-thumb: rgba(212, 167, 118, 0.56);
+        --scroll-thumb-hover: rgba(212, 167, 118, 0.76);
+        --shadow: 0 20px 44px rgba(0, 0, 0, 0.3);
+        --shadow-soft: 0 8px 22px rgba(0, 0, 0, 0.22);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Manrope", system-ui, sans-serif;
+        overflow: hidden;
+        scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+        letter-spacing: 0.01em;
+        position: relative;
+      }
+
+      body::before,
+      body::after {
+        content: "";
+        position: fixed;
+        z-index: -1;
+        pointer-events: none;
+      }
+
+      body::before {
+        top: -180px;
+        right: -120px;
+        width: 420px;
+        height: 420px;
+        background: radial-gradient(circle at center, rgba(212, 167, 118, 0.16), transparent 68%);
+      }
+
+      body::after {
+        left: -160px;
+        bottom: -200px;
+        width: 520px;
+        height: 520px;
+        background: radial-gradient(circle at center, rgba(110, 126, 167, 0.14), transparent 70%);
+      }
+
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+      }
+
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      *::-webkit-scrollbar-track {
+        background: var(--scroll-track);
+      }
+
+      *::-webkit-scrollbar-thumb {
+        background: var(--scroll-thumb);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+
+      *::-webkit-scrollbar-thumb:hover {
+        background: var(--scroll-thumb-hover);
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+
+      *::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      .app {
+        display: grid;
+        grid-template-columns: 268px minmax(0, 1fr);
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .app.sidebar-collapsed {
+        grid-template-columns: 86px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        background: linear-gradient(180deg, rgba(29, 27, 25, 0.95), rgba(26, 24, 22, 0.92));
+        border-right: 1px solid var(--line);
+        padding: 16px 12px 12px;
+        display: grid;
+        grid-template-rows: auto auto auto 1fr auto;
+        gap: 18px;
+        min-height: 0;
+        backdrop-filter: blur(14px);
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 6px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-badge {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03));
+        border: 1px solid var(--line);
+        font-size: 14px;
+        font-weight: 700;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .brand-badge img,
+      .message-badge img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transform: scaleX(-1);
+        display: block;
+      }
+
+      .brand-name {
+        font-family: "Literata", serif;
+        font-size: 18px;
+        letter-spacing: 0.015em;
+      }
+
+      .brand-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        font-size: 11px;
+        background: var(--surface-glass);
+        cursor: pointer;
+        transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+      }
+
+      .brand-icon:hover {
+        border-color: rgba(212, 167, 118, 0.34);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .nav-list,
+      .workspace-list,
+      .recent-list {
+        display: grid;
+        gap: 4px;
+      }
+
+      .nav-item,
+      .workspace-item,
+      .recent-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        border-radius: 12px;
+        text-align: left;
+        padding: 10px 11px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: background-color 140ms ease, color 140ms ease;
+      }
+
+      .nav-item:hover,
+      .nav-item.active,
+      .workspace-item:hover,
+      .workspace-item.active,
+      .recent-item:hover,
+      .recent-item.active {
+        background: var(--surface-raise);
+        color: var(--text);
+      }
+
+      .nav-icon,
+      .workspace-icon {
+        width: 16px;
+        height: 16px;
+        color: inherit;
+        text-align: center;
+        opacity: 0.9;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-icon svg,
+      .workspace-icon svg,
+      .brand-icon svg,
+      .topbar-icon svg {
+        width: 16px;
+        height: 16px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .sidebar-section-title {
+        color: var(--muted-soft);
+        font-size: 12px;
+        padding: 0 10px;
+        text-transform: none;
+      }
+
+      .search-wrap {
+        padding: 0 10px;
+      }
+
+      .search-input {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 120ms ease, background-color 120ms ease;
+      }
+
+      .search-input:focus {
+        border-color: rgba(212, 167, 118, 0.46);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .search-input::placeholder {
+        color: var(--muted-soft);
+      }
+
+      .recent-list {
+        align-content: start;
+        overflow-y: auto;
+        min-height: 0;
+      }
+
+      .sidebar-panel {
+        display: grid;
+        gap: 8px;
+        padding: 0 10px;
+      }
+
+      .panel-card {
+        border: 1px solid var(--line);
+        background: var(--surface-glass);
+        border-radius: 14px;
+        padding: 13px;
+        display: grid;
+        gap: 7px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      }
+
+      .panel-card-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .panel-card-copy {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .panel-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .panel-chip {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 10px;
+        font-size: 11px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .tool-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .file-browser {
+        display: grid;
+        gap: 10px;
+      }
+
+      .file-browser-header {
+        display: grid;
+        gap: 8px;
+      }
+
+      .file-browser-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .file-browser-crumb {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: background-color 120ms ease, color 120ms ease;
+      }
+
+      .file-browser-crumb:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .file-browser-crumb.current {
+        color: #f7dfc5;
+        border-color: rgba(209, 163, 112, 0.28);
+        background: rgba(209, 163, 112, 0.12);
+      }
+
+      .file-browser-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .file-browser-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .file-browser-create {
+        display: grid;
+        gap: 8px;
+      }
+
+      .file-browser-create-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .file-browser-create-row input {
+        flex: 1 1 auto;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: rgba(255, 255, 255, 0.025);
+        color: var(--text);
+        padding: 7px 10px;
+        font-size: 12px;
+        transition: border-color 120ms ease, background-color 120ms ease;
+      }
+
+      .file-browser-create-row input:focus {
+        outline: none;
+        border-color: rgba(212, 167, 118, 0.44);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .file-preview {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.022);
+        padding: 13px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .file-preview-header {
+        display: grid;
+        gap: 4px;
+      }
+
+      .file-preview-title {
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .file-preview-path {
+        font-family: "JetBrains Mono", monospace;
+        color: #f1ddd0;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+      }
+
+      .file-preview-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .file-preview-meta {
+        color: var(--muted-soft);
+        font-size: 11px;
+      }
+
+      .file-preview-text,
+      .file-preview-editor {
+        width: 100%;
+        min-height: 220px;
+        max-height: 360px;
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.16);
+        color: var(--text);
+        padding: 10px 12px;
+        overflow: auto;
+        line-height: 1.5;
+        font-size: 12px;
+        font-family: "JetBrains Mono", monospace;
+        white-space: pre;
+      }
+
+      .file-preview-editor {
+        resize: vertical;
+        outline: none;
+      }
+
+      .file-preview-image {
+        width: 100%;
+        max-height: 320px;
+        border-radius: 10px;
+        border: 1px solid var(--line-soft);
+        object-fit: contain;
+        background: rgba(0, 0, 0, 0.14);
+      }
+
+      .permission-manager {
+        display: grid;
+        gap: 8px;
+      }
+
+      .permission-pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .permission-pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--muted);
+        padding: 5px 10px;
+        font-size: 11px;
+        cursor: pointer;
+        transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+      }
+
+      .permission-pill.active {
+        border-color: rgba(209, 163, 112, 0.28);
+        background: rgba(209, 163, 112, 0.12);
+        color: #f7dfc5;
+      }
+
+      .workflow-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .workflow-step-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .file-browser-item {
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.024);
+        padding: 10px 12px;
+        display: grid;
+        gap: 8px;
+        transition: border-color 140ms ease, background-color 140ms ease;
+      }
+
+      .file-browser-item:hover {
+        border-color: rgba(212, 167, 118, 0.28);
+        background: rgba(255, 255, 255, 0.045);
+      }
+
+      .file-browser-item-main {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .file-browser-item-name {
+        color: var(--text);
+        overflow-wrap: anywhere;
+      }
+
+      .file-browser-item-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .workflow-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .workflow-header {
+        display: grid;
+        gap: 6px;
+      }
+
+      .workflow-title {
+        font-size: 15px;
+        color: var(--text);
+        line-height: 1.4;
+      }
+
+      .workflow-summary {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .workflow-meta {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+
+      .workflow-steps {
+        display: grid;
+        gap: 8px;
+      }
+
+      .workflow-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.024);
+        padding: 10px 12px;
+      }
+
+      .workflow-step-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        margin-top: 4px;
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        background: transparent;
+      }
+
+      .workflow-step.pending .workflow-step-dot {
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .workflow-step.in_progress .workflow-step-dot {
+        background: var(--accent);
+        border-color: transparent;
+      }
+
+      .workflow-step.completed .workflow-step-dot {
+        background: #95c085;
+        border-color: transparent;
+      }
+
+      .workflow-step-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .workflow-step-label {
+        font-size: 13px;
+        color: var(--text);
+        line-height: 1.45;
+      }
+
+      .workflow-step-state {
+        font-size: 11px;
+        color: var(--muted-soft);
+        text-transform: lowercase;
+      }
+
+      .sidebar-empty {
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        padding: 14px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+        background: rgba(255, 255, 255, 0.02);
+      }
+
+      .tool-item {
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: rgba(255, 255, 255, 0.024);
+        padding: 10px 12px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .tool-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .tool-name {
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .tool-state {
+        border-radius: 999px;
+        padding: 3px 8px;
+        font-size: 11px;
+        border: 1px solid var(--line);
+      }
+
+      .tool-state.enabled {
+        color: #d8f1cf;
+        background: rgba(91, 140, 82, 0.2);
+      }
+
+      .tool-state.disabled {
+        color: #f0c5c5;
+        background: rgba(144, 71, 71, 0.18);
+      }
+
+      .tool-meta {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+
+      .recent-item {
+        justify-content: space-between;
+        position: relative;
+        min-width: 0;
+        gap: 8px;
+      }
+
+      .recent-label {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .recent-more {
+        opacity: 0;
+        transition: opacity 120ms ease;
+        color: var(--muted-soft);
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+      }
+
+      .recent-item:hover .recent-more,
+      .recent-item.active .recent-more {
+        opacity: 1;
+      }
+
+      .recent-more:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .recent-empty {
+        padding: 10px;
+        color: var(--muted-soft);
+        font-size: 12px;
+      }
+
+      .menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        width: 156px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #2b2926;
+        box-shadow: var(--shadow);
+        padding: 6px;
+        display: grid;
+        gap: 2px;
+        z-index: 12;
+      }
+
+      .menu[hidden] {
+        display: none !important;
+      }
+
+      .menu-item {
+        width: 100%;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        text-align: left;
+        border-radius: 8px;
+        padding: 8px 10px;
+        cursor: pointer;
+      }
+
+      .menu-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .menu-item.danger {
+        color: #f2c0c0;
+      }
+
+      .sidebar-footer {
+        border-top: 1px solid var(--line-soft);
+        padding: 10px 6px 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px;
+      }
+
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .profile-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: #d8c8ae;
+        color: #2d251c;
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+      }
+
+      .profile-meta {
+        min-width: 0;
+      }
+
+      .profile-name {
+        font-size: 13px;
+        color: var(--text);
+        white-space: nowrap;
+      }
+
+      .profile-plan {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+
+      .app.sidebar-collapsed .brand-name,
+      .app.sidebar-collapsed .nav-item span:last-child,
+      .app.sidebar-collapsed .workspace-item span:last-child,
+      .app.sidebar-collapsed .recent-list-wrap,
+      .app.sidebar-collapsed .profile-meta {
+        display: none;
+      }
+
+      .app.sidebar-collapsed .brand-row,
+      .app.sidebar-collapsed .sidebar-footer {
+        justify-content: center;
+      }
+
+      .app.sidebar-collapsed .brand,
+      .app.sidebar-collapsed .profile {
+        gap: 0;
+      }
+
+      .app.sidebar-collapsed .brand-icon svg {
+        transform: scaleX(-1);
+      }
+
+      .app.sidebar-collapsed .nav-item,
+      .app.sidebar-collapsed .workspace-item {
+        justify-content: center;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(7, 6, 5, 0.45);
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        z-index: 20;
+      }
+
+      .overlay[hidden] {
+        display: none;
+      }
+
+      .modal {
+        width: min(100%, 460px);
+        border-radius: 20px;
+        border: 1px solid var(--line);
+        background: #2a2825;
+        box-shadow: var(--shadow);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .modal-title {
+        font-family: "Literata", serif;
+        font-size: 24px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .field input,
+      .field select {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        border-radius: 12px;
+        padding: 10px 12px;
+        outline: none;
+        transition: border-color 120ms ease, background-color 120ms ease;
+      }
+
+      .field input:focus,
+      .field select:focus {
+        border-color: rgba(212, 167, 118, 0.44);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+
+      .ghost-button {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .toast {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 30;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #2d2b28;
+        color: var(--text);
+        padding: 10px 14px;
+        box-shadow: var(--shadow);
+      }
+
+      .toast[hidden] {
+        display: none;
+      }
+
+      .main {
+        min-width: 0;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: auto minmax(0, 1fr);
+        overflow: hidden;
+      }
+
+      .topbar {
+        height: 58px;
+        border-bottom: 1px solid var(--line-soft);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        padding: 0 20px;
+        background: linear-gradient(180deg, rgba(35, 33, 31, 0.82), rgba(35, 33, 31, 0.68));
+        backdrop-filter: blur(10px);
+      }
+
+      .topbar-title {
+        flex: 1 1 auto;
+        min-width: 0;
+        font-size: 15px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .topbar-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .topbar-button {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        color: var(--text);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color 120ms ease, background-color 120ms ease;
+      }
+
+      .topbar-button:hover {
+        border-color: rgba(212, 167, 118, 0.34);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .topbar-button.danger {
+        border-color: rgba(209, 163, 112, 0.34);
+        background: rgba(209, 163, 112, 0.14);
+        color: #f7dfc5;
+      }
+
+      .topbar-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 12px;
+        cursor: pointer;
+        transition: border-color 120ms ease, color 120ms ease, background-color 120ms ease;
+        display: none;
+      }
+
+      .topbar-icon:hover {
+        border-color: rgba(212, 167, 118, 0.34);
+        color: #f0ddc9;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .content {
+        min-height: 0;
+        display: grid;
+        overflow: hidden;
+      }
+
+      .view {
+        min-height: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .view[hidden] {
+        display: none !important;
+      }
+
+      .welcome-view {
+        height: 100%;
+        display: grid;
+        place-items: center;
+        padding: 32px;
+      }
+
+      .welcome-shell {
+        width: min(100%, 720px);
+        display: grid;
+        gap: 24px;
+        justify-items: center;
+      }
+
+      .welcome-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .welcome-badge {
+        border: 1px solid var(--line);
+        background: rgba(0, 0, 0, 0.15);
+        border-radius: 999px;
+        padding: 6px 12px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .welcome-badge.warning {
+        border-color: rgba(209, 163, 112, 0.34);
+        background: rgba(209, 163, 112, 0.14);
+        color: #f7dfc5;
+      }
+
+      .welcome-title {
+        font-family: "Literata", serif;
+        font-size: clamp(38px, 5vw, 56px);
+        line-height: 1.04;
+        text-align: center;
+        letter-spacing: -0.02em;
+        text-wrap: balance;
+        text-shadow: 0 10px 26px rgba(0, 0, 0, 0.25);
+      }
+
+      .welcome-title .spark {
+        color: var(--accent);
+        margin-right: 8px;
+      }
+
+      .composer-card {
+        width: 100%;
+        background: linear-gradient(180deg, rgba(52, 49, 45, 0.96), rgba(43, 40, 36, 0.98));
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        padding: 18px 18px 16px;
+        backdrop-filter: blur(12px);
+      }
+
+      .composer-card textarea {
+        width: 100%;
+        min-height: 78px;
+        resize: none;
+        border: 0;
+        background: transparent;
+        color: var(--text);
+        outline: none;
+        font-size: 18px;
+        line-height: 1.4;
+        letter-spacing: 0.01em;
+      }
+
+      .composer-card textarea::placeholder {
+        color: var(--muted);
+      }
+
+      .composer-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 10px;
+      }
+
+      .attachment-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .attachment-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 12px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .attachment-remove {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        padding: 0;
+      }
+
+      .attachment-feedback {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted-soft);
+      }
+
+      .attachment-feedback.error {
+        color: #f0c5c5;
+      }
+
+      .toolbar-left,
+      .toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .toolbar-plus,
+      .toolbar-send {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--muted);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition: transform 120ms ease, border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+      }
+
+      .toolbar-plus:hover,
+      .toolbar-send:hover {
+        transform: translateY(-1px);
+      }
+
+      .toolbar-send {
+        background: var(--text);
+        color: #26211c;
+        border-color: transparent;
+      }
+
+      .toolbar-send.cancel {
+        background: #4a332f;
+        color: #f6d9d2;
+      }
+
+      .model-select {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .suggestion-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .suggestion-chip {
+        border: 1px solid var(--line);
+        background: var(--surface-glass);
+        color: var(--muted);
+        border-radius: 12px;
+        padding: 9px 14px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 120ms ease, background-color 120ms ease, color 120ms ease;
+      }
+
+      .suggestion-chip:hover {
+        border-color: rgba(212, 167, 118, 0.35);
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--text);
+      }
+
+      .chat-view {
+        height: 100%;
+        min-height: 0;
+        display: grid;
+        grid-template-rows: minmax(0, 1fr) auto;
+        overflow: hidden;
+      }
+
+      .messages {
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        padding: 28px 24px 12px;
+        scrollbar-gutter: stable;
+      }
+
+      .messages-inner {
+        width: min(100%, 760px);
+        margin: 0 auto;
+        display: grid;
+        gap: 28px;
+        padding-bottom: 4px;
+      }
+
+      .message {
+        display: grid;
+        gap: 8px;
+      }
+
+      .message.user {
+        justify-items: end;
+      }
+
+      .message.agent {
+        justify-items: start;
+      }
+
+      .message-role {
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted-soft);
+      }
+
+      .message-row {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .message.user .message-row {
+        justify-content: flex-end;
+      }
+
+      .message-badge {
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        color: var(--text);
+        font-size: 11px;
+        background: var(--panel-soft);
+        flex: 0 0 auto;
+        overflow: hidden;
+      }
+
+      .bubble {
+        display: inline-block;
+        width: fit-content;
+        max-width: min(100%, 620px);
+        padding: 15px 16px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(56, 53, 49, 0.96), rgba(49, 46, 42, 0.96));
+        line-height: 1.55;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        box-shadow: var(--shadow-soft);
+      }
+
+      .bubble-attachments {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .bubble-attachment {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 9px;
+        font-size: 11px;
+        color: var(--muted);
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .message.agent .bubble {
+        background: rgba(0, 0, 0, 0.08);
+        border: 0;
+        padding: 2px 0;
+        max-width: min(100%, 680px);
+        box-shadow: none;
+      }
+
+      .listing-card {
+        display: grid;
+        gap: 14px;
+        padding: 4px 0;
+      }
+
+      .listing-head {
+        display: grid;
+        gap: 4px;
+      }
+
+      .listing-head-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .listing-title {
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .listing-path {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: #f1ddd0;
+        overflow-wrap: anywhere;
+      }
+
+      .listing-breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .listing-crumb {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .listing-crumb:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .listing-crumb.current {
+        color: #f7dfc5;
+        border-color: rgba(209, 163, 112, 0.28);
+        background: rgba(209, 163, 112, 0.12);
+      }
+
+      .listing-crumb-sep {
+        color: var(--muted-soft);
+        font-size: 11px;
+      }
+
+      .listing-count {
+        font-size: 12px;
+        color: var(--muted-soft);
+      }
+
+      .listing-items {
+        display: grid;
+        gap: 8px;
+      }
+
+      .listing-item {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .listing-main {
+        min-width: 0;
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+      }
+
+      .listing-kind {
+        flex: 0 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-size: 10px;
+        color: var(--muted-soft);
+      }
+
+      .listing-name {
+        color: var(--text);
+        overflow-wrap: anywhere;
+      }
+
+      .listing-actions {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .listing-action {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .listing-action:hover {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .listing-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+
+      .listing-note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .approval-bubble {
+        display: grid;
+        gap: 8px;
+        padding: 12px 14px;
+        border: 1px solid rgba(209, 163, 112, 0.24);
+        background: rgba(209, 163, 112, 0.08);
+        border-radius: 14px;
+      }
+
+      .approval-bubble-title {
+        color: #f7dfc5;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .approval-bubble-copy {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+
+      .streaming-caret {
+        display: inline-block;
+        width: 9px;
+        margin-left: 3px;
+        opacity: 0.9;
+        animation: blink 1s steps(1) infinite;
+      }
+
+      .trace {
+        width: min(100%, 620px);
+        margin-top: 6px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px dashed var(--line);
+        background: rgba(0, 0, 0, 0.12);
+        display: grid;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .trace-title {
+        color: var(--text);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .trace-count {
+        color: var(--muted-soft);
+        font-size: 11px;
+      }
+
+      .trace-shell {
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.02);
+        overflow: hidden;
+      }
+
+      .trace-shell-summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+      }
+
+      .trace-shell-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .trace-shell-main {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .trace-shell-icon {
+        width: 16px;
+        text-align: center;
+        color: var(--muted-soft);
+      }
+
+      .trace-shell-copy {
+        display: grid;
+        gap: 2px;
+      }
+
+      .trace-shell-label {
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      .trace-shell-subtitle {
+        color: var(--muted-soft);
+        font-size: 11px;
+      }
+
+      .trace-shell-body {
+        border-top: 1px solid var(--line-soft);
+        padding: 8px 0 0;
+        display: grid;
+        gap: 8px;
+      }
+
+      .trace-entry code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: #f1ddd0;
+      }
+
+      .trace-card {
+        border: 1px solid var(--line-soft);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        overflow: hidden;
+      }
+
+      .trace-summary {
+        list-style: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+      }
+
+      .trace-summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .trace-summary-main {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .trace-summary-icon {
+        width: 16px;
+        text-align: center;
+        color: var(--muted-soft);
+      }
+
+      .trace-summary-name {
+        color: var(--text);
+        font-size: 12px;
+      }
+
+      .trace-summary-state {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 2px 7px;
+        font-size: 10px;
+        color: var(--muted);
+      }
+
+      .trace-summary-state.pending {
+        color: #e9d3a8;
+      }
+
+      .trace-summary-state.complete {
+        color: #cce7c4;
+      }
+
+      .trace-summary-state.error {
+        color: #efc1c1;
+      }
+
+      .trace-body {
+        border-top: 1px solid var(--line-soft);
+        padding: 10px 12px 12px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .trace-block {
+        display: grid;
+        gap: 4px;
+      }
+
+      .trace-label {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+
+      .trace-pre {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: #f1ddd0;
+      }
+
+      .permission-request {
+        display: grid;
+        gap: 8px;
+        border: 1px solid rgba(209, 163, 112, 0.24);
+        background: rgba(209, 163, 112, 0.08);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+
+      .permission-request-title {
+        color: #f7dfc5;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .permission-request-copy {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .permission-request-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .permission-request-button {
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .permission-request-button.primary {
+        border-color: rgba(209, 163, 112, 0.34);
+        background: rgba(209, 163, 112, 0.16);
+        color: #f7dfc5;
+      }
+
+      .live-activity {
+        width: min(100%, 620px);
+        margin-top: 2px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid var(--line-soft);
+        background: rgba(255, 255, 255, 0.03);
+        display: grid;
+        gap: 4px;
+      }
+
+      .live-activity-label {
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted-soft);
+      }
+
+      .live-activity-text {
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .live-activity-meta {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .trace-rich {
+        display: grid;
+        gap: 8px;
+      }
+
+      .trace-rich-summary {
+        display: grid;
+        gap: 4px;
+      }
+
+      .trace-rich-path {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: #f1ddd0;
+        overflow-wrap: anywhere;
+      }
+
+      .trace-rich-count {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+
+      .trace-rich-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: grid;
+        gap: 4px;
+      }
+
+      .trace-rich-item {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        min-width: 0;
+      }
+
+      .trace-rich-kind {
+        flex: 0 0 auto;
+        font-size: 10px;
+        color: var(--muted-soft);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 2px 6px;
+      }
+
+      .trace-rich-name {
+        min-width: 0;
+        overflow-wrap: anywhere;
+        color: var(--text);
+      }
+
+      .chat-composer-wrap {
+        flex: 0 0 auto;
+        padding: 10px 24px 22px;
+      }
+
+      .chat-composer-inner {
+        width: min(100%, 760px);
+        margin: 0 auto;
+      }
+
+      .chat-composer {
+        background: linear-gradient(180deg, rgba(54, 51, 47, 0.96), rgba(45, 43, 39, 0.98));
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 12px 14px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(10px);
+      }
+
+      .chat-composer textarea {
+        width: 100%;
+        min-height: 56px;
+        resize: none;
+        background: transparent;
+        border: 0;
+        outline: none;
+        color: var(--text);
+        font-size: 16px;
+      }
+
+      .chat-composer textarea::placeholder {
+        color: var(--muted);
+      }
+
+      .chat-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 8px;
+      }
+
+      .chat-toolbar-left,
+      .chat-toolbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status {
+        font-size: 12px;
+        color: var(--muted-soft);
+      }
+
+      .is-busy textarea {
+        opacity: 0.72;
+      }
+
+      .is-busy .toolbar-plus {
+        opacity: 0.45;
+        pointer-events: none;
+      }
+
+      @keyframes blink {
+        0%,
+        49% {
+          opacity: 1;
+        }
+        50%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .app.sidebar-collapsed {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          display: none;
+        }
+
+        .topbar-button {
+          display: none;
+        }
+
+        .topbar-icon {
+          display: grid;
+        }
+
+        .messages,
+        .chat-composer-wrap {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .welcome-view {
+          padding: 22px 14px;
+        }
+
+        .welcome-title {
+          font-size: clamp(30px, 9.5vw, 40px);
+        }
+
+        .composer-card {
+          border-radius: 18px;
+          padding: 14px;
+        }
+
+        .composer-card textarea {
+          font-size: 16px;
+          min-height: 72px;
+        }
+
+        .messages {
+          padding-top: 18px;
+        }
+
+        .chat-composer {
+          border-radius: 15px;
+          padding: 10px 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand-row">
+          <div class="brand">
+            <div class="brand-badge">
+              <img src="/agent-avatar.png" alt="Chocks" />
+            </div>
+            <div class="brand-name">Chocks</div>
+          </div>
+          <button class="brand-icon" id="toggle-sidebar-button" type="button" title="Colapsar sidebar" aria-label="Colapsar sidebar">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3.5" y="5" width="17" height="14" rx="2.4"></rect>
+              <path d="M9 5v14"></path>
+              <path d="M14 9l3 3-3 3"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="nav-list">
+          <button class="nav-item" id="new-chat-button" type="button">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+              </svg>
+            </span>
+            <span>Novo bate-papo</span>
+          </button>
+          <button class="nav-item" id="search-button" type="button">
+            <span class="nav-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="11" cy="11" r="5"></circle>
+                <path d="M16 16l4 4"></path>
+              </svg>
+            </span>
+            <span>Procurar</span>
+          </button>
+        </div>
+
+        <div class="workspace-list">
+          <button class="workspace-item active" data-workspace="conversations" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M7 8h10"></path>
+                <path d="M7 12h7"></path>
+                <path d="M7 16h5"></path>
+                <rect x="4" y="5" width="16" height="14" rx="4"></rect>
+              </svg>
+            </span>
+            <span>Conversas</span>
+          </button>
+          <button class="workspace-item" data-workspace="code" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M8 8H5a3 3 0 1 1 3-3z"></path>
+                <path d="M16 8h3a3 3 0 1 0-3-3z"></path>
+                <path d="M8 16H5a3 3 0 1 0 3 3z"></path>
+                <path d="M16 16h3a3 3 0 1 1-3 3z"></path>
+                <path d="M8 5v14"></path>
+                <path d="M16 5v14"></path>
+                <path d="M5 8h14"></path>
+                <path d="M5 16h14"></path>
+              </svg>
+            </span>
+            <span>Ferramentas</span>
+          </button>
+          <button class="workspace-item" data-workspace="files" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h6l2 2h8v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"></path>
+                <path d="M4 7a2 2 0 0 1 2-2h4l2 2"></path>
+              </svg>
+            </span>
+            <span>Arquivos</span>
+          </button>
+          <button class="workspace-item" data-workspace="workflow" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 7h9"></path>
+                <path d="M5 12h14"></path>
+                <path d="M5 17h8"></path>
+                <circle cx="17" cy="7" r="2"></circle>
+                <circle cx="16" cy="17" r="2"></circle>
+              </svg>
+            </span>
+            <span>Workflow</span>
+          </button>
+          <button class="workspace-item" data-workspace="settings" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 3v2"></path>
+                <path d="M12 19v2"></path>
+                <path d="M3 12h2"></path>
+                <path d="M19 12h2"></path>
+                <path d="M5.6 5.6l1.4 1.4"></path>
+                <path d="M17 17l1.4 1.4"></path>
+                <path d="M18.4 5.6L17 7"></path>
+                <path d="M7 17l-1.4 1.4"></path>
+              </svg>
+            </span>
+            <span>Config</span>
+          </button>
+        </div>
+
+        <div class="recent-list-wrap">
+          <div class="sidebar-section-title" id="sidebar-section-title">Recentes</div>
+          <div class="search-wrap" id="search-wrap" hidden>
+            <input class="search-input" id="search-input" type="text" placeholder="Buscar conversa..." />
+          </div>
+          <div class="recent-list" id="recent-list"></div>
+          <div class="sidebar-panel" id="sidebar-panel" hidden></div>
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="profile">
+            <div class="profile-avatar">B</div>
+            <div class="profile-meta">
+              <div class="profile-name">bsilv</div>
+              <div class="profile-plan">Plano local</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main">
+        <div class="topbar">
+          <div class="topbar-title" id="topbar-title">Nova conversa</div>
+          <div class="topbar-actions">
+            <button class="topbar-button" id="full-access-toggle" type="button">Acesso total: off</button>
+            <button class="topbar-button" id="share-button" type="button">Compartilhar</button>
+            <button class="topbar-button" id="profile-button" type="button" title="Abrir configuracoes">Config</button>
+            <button class="topbar-icon" id="profile-icon-button" type="button" title="Abrir configuracoes" aria-label="Abrir configuracoes">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="3.2"></circle>
+                <path d="M6.5 18.5c1.6-2.7 3.5-4 5.5-4s3.9 1.3 5.5 4"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="content">
+          <div class="view welcome-view" id="welcome-view">
+            <div class="welcome-shell">
+              <div class="welcome-badges">
+                <div class="welcome-badge">Plano local</div>
+                <div class="welcome-badge">Chocks Workspace</div>
+                <div class="welcome-badge warning" id="welcome-full-access-badge" hidden>Acesso total ligado</div>
+              </div>
+              <div class="welcome-title"><span class="spark">*</span>Bem-vindo ao Chocks</div>
+              <div class="composer-card">
+                <textarea id="welcome-prompt" placeholder="Como posso ajudar voce hoje?"></textarea>
+                <input id="welcome-file-input" type="file" hidden />
+                <div class="attachment-list" id="welcome-attachments" hidden></div>
+                <div class="attachment-feedback" id="welcome-attachment-feedback" hidden></div>
+                <div class="composer-toolbar">
+                  <div class="toolbar-left">
+                    <button class="toolbar-plus" id="welcome-attach" type="button">+</button>
+                  </div>
+                  <div class="toolbar-right">
+                    <div class="model-select">gpt-4o-mini</div>
+                    <button class="toolbar-send" id="welcome-send" type="button">^</button>
+                  </div>
+                </div>
+              </div>
+              <div class="suggestion-row">
+                <button class="suggestion-chip" type="button" data-suggestion="Escreva um plano curto para a tarefa que eu vou descrever.">Escrever</button>
+                <button class="suggestion-chip" type="button" data-suggestion="Explique este tema em linguagem simples, com exemplos praticos.">Aprender</button>
+                <button class="suggestion-chip" type="button" data-suggestion="Analise meu codigo atual e proponha o proximo passo com patch objetivo.">Codigo</button>
+                <button class="suggestion-chip" type="button" data-suggestion="Sugira a melhor acao para avançar no objetivo atual do projeto.">Escolha do Chocks</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="view chat-view" id="chat-view" hidden>
+            <div class="messages" id="messages">
+              <div class="messages-inner" id="messages-inner"></div>
+            </div>
+            <div class="chat-composer-wrap">
+              <div class="chat-composer-inner">
+                <div class="chat-composer">
+                  <textarea id="chat-prompt" placeholder="Responder..."></textarea>
+                  <input id="chat-file-input" type="file" hidden />
+                  <div class="attachment-list" id="chat-attachments" hidden></div>
+                  <div class="attachment-feedback" id="chat-attachment-feedback" hidden></div>
+                  <div class="chat-toolbar">
+                    <div class="chat-toolbar-left">
+                      <button class="toolbar-plus" id="chat-attach" type="button">+</button>
+                      <div class="status" id="status"></div>
+                    </div>
+                    <div class="chat-toolbar-right">
+                      <div class="model-select">gpt-4o-mini</div>
+                      <button class="toolbar-send" id="chat-send" type="button">^</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <div class="overlay" id="settings-overlay" hidden>
+      <div class="modal">
+        <div class="modal-title">Personalizar Chocks</div>
+        <div class="field">
+          <label for="settings-display-name">Nome exibido</label>
+          <input id="settings-display-name" type="text" />
+        </div>
+        <div class="field">
+          <label for="settings-welcome-title">Titulo de boas-vindas</label>
+          <input id="settings-welcome-title" type="text" />
+        </div>
+        <div class="field">
+          <label for="settings-plan-label">Badge principal</label>
+          <input id="settings-plan-label" type="text" />
+        </div>
+        <div class="field">
+          <label for="settings-permission-mode">Modo de permissao</label>
+          <select id="settings-permission-mode">
+            <option value="ask">Ask: leitura livre, acoes sensiveis so com pedido explicito</option>
+            <option value="auto">Auto: executa tools habilitadas sem bloqueio extra</option>
+            <option value="read_only">Read-only: sem escrita, shell ou rede</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="settings-full-access">Acesso total ao computador</label>
+          <input id="settings-full-access" type="checkbox" />
+        </div>
+        <div class="modal-actions">
+          <button class="ghost-button" id="settings-cancel" type="button">Cancelar</button>
+          <button class="topbar-button" id="settings-save" type="button">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="rename-overlay" hidden>
+      <div class="modal">
+        <div class="modal-title">Renomear/Mover</div>
+        <div class="field">
+          <label for="rename-current">Caminho atual</label>
+          <input id="rename-current" type="text" readonly style="opacity: 0.6;" />
+        </div>
+        <div class="field">
+          <label for="rename-new">Novo caminho</label>
+          <input id="rename-new" type="text" placeholder="arquivo.txt ou pasta/arquivo.txt" />
+        </div>
+        <div class="modal-actions">
+          <button class="ghost-button" id="rename-cancel" type="button">Cancelar</button>
+          <button class="topbar-button" id="rename-confirm" type="button">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" hidden></div>
+
+    <script>
+      const STORAGE_KEY = "chocks_chats_v2"
+      const ACTIVE_KEY = "chocks_active_chat_v2"
+      const SETTINGS_KEY = "chocks_ui_settings_v1"
+      const WORKSPACE_KEY = "chocks_workspace_view_v1"
+      const USER_KEY = "chocks_local_user_v1"
+      const APPROVALS_KEY = "chocks_chat_approvals_v1"
+      const FILE_BROWSER_KEY = "chocks_file_browser_v1"
+      const FILE_PREVIEW_KEY = "chocks_file_preview_v1"
+      const WORKFLOW_ARCHIVE_KEY = "chocks_workflow_archive_v1"
+      const SIDEBAR_COLLAPSED_KEY = "chocks_sidebar_collapsed_v1"
+
+      const appEl = document.querySelector(".app")
+      const recentListEl = document.getElementById("recent-list")
+      const sidebarPanelEl = document.getElementById("sidebar-panel")
+      const sidebarSectionTitleEl = document.getElementById("sidebar-section-title")
+      const searchWrapEl = document.getElementById("search-wrap")
+      const searchInputEl = document.getElementById("search-input")
+      const topbarTitleEl = document.getElementById("topbar-title")
+      const welcomeViewEl = document.getElementById("welcome-view")
+      const chatViewEl = document.getElementById("chat-view")
+      const messagesInnerEl = document.getElementById("messages-inner")
+      const statusEl = document.getElementById("status")
+      const welcomePromptEl = document.getElementById("welcome-prompt")
+      const chatPromptEl = document.getElementById("chat-prompt")
+      const welcomeFileInputEl = document.getElementById("welcome-file-input")
+      const chatFileInputEl = document.getElementById("chat-file-input")
+      const welcomeAttachmentsEl = document.getElementById("welcome-attachments")
+      const chatAttachmentsEl = document.getElementById("chat-attachments")
+      const welcomeAttachmentFeedbackEl = document.getElementById("welcome-attachment-feedback")
+      const chatAttachmentFeedbackEl = document.getElementById("chat-attachment-feedback")
+      const welcomeSendEl = document.getElementById("welcome-send")
+      const chatSendEl = document.getElementById("chat-send")
+      const newChatButtonEl = document.getElementById("new-chat-button")
+      const shareButtonEl = document.getElementById("share-button")
+      const fullAccessToggleEl = document.getElementById("full-access-toggle")
+      const profileButtonEl = document.getElementById("profile-button")
+      const profileIconButtonEl = document.getElementById("profile-icon-button")
+      const toggleSidebarButtonEl = document.getElementById("toggle-sidebar-button")
+      const welcomeAttachEl = document.getElementById("welcome-attach")
+      const chatAttachEl = document.getElementById("chat-attach")
+      const searchButtonEl = document.getElementById("search-button")
+      const suggestionChipEls = Array.from(document.querySelectorAll(".suggestion-chip"))
+      const workspaceButtons = Array.from(document.querySelectorAll("[data-workspace]"))
+      const settingsOverlayEl = document.getElementById("settings-overlay")
+      const settingsDisplayNameEl = document.getElementById("settings-display-name")
+      const settingsWelcomeTitleEl = document.getElementById("settings-welcome-title")
+      const settingsPlanLabelEl = document.getElementById("settings-plan-label")
+      const settingsPermissionModeEl = document.getElementById("settings-permission-mode")
+      const settingsFullAccessEl = document.getElementById("settings-full-access")
+      const settingsSaveEl = document.getElementById("settings-save")
+      const settingsCancelEl = document.getElementById("settings-cancel")
+      const renameOverlayEl = document.getElementById("rename-overlay")
+      const renameCurrentEl = document.getElementById("rename-current")
+      const renameNewEl = document.getElementById("rename-new")
+      const renameConfirmEl = document.getElementById("rename-confirm")
+      const renameCancelEl = document.getElementById("rename-cancel")
+      const toastEl = document.getElementById("toast")
+      const profileNameEl = document.querySelector(".profile-name")
+      const profilePlanEl = document.querySelector(".profile-plan")
+      const welcomeBadgeEls = Array.from(document.querySelectorAll(".welcome-badge"))
+      const welcomeTitleEl = document.querySelector(".welcome-title")
+      const welcomeFullAccessBadgeEl = document.getElementById("welcome-full-access-badge")
+      const composerEls = Array.from(document.querySelectorAll(".chat-composer, .composer-card"))
+      const navButtons = [newChatButtonEl, searchButtonEl]
+
+      let searchOpen = false
+      let searchQuery = ""
+      let toastTimer = null
+      let toolStatuses = []
+      let activeWorkflow = null
+      let fileBrowserState = null
+      let filePreviewState = null
+      let chatsState = []
+      let openMenuChatId = null
+      let welcomeAttachments = []
+      let chatAttachments = []
+      let activeStreamAbortController = null
+      let isStreaming = false
+      const MAX_ATTACHMENT_BYTES = 1024 * 1024
+      const ALLOWED_ATTACHMENT_EXTENSIONS = [".txt", ".md", ".json", ".js", ".ts", ".tsx", ".jsx", ".css", ".html", ".yml", ".yaml"]
+      const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
+
+      function loadSettings() {
+        try {
+          const raw = localStorage.getItem(SETTINGS_KEY)
+          const parsed = raw ? JSON.parse(raw) : {}
+          return {
+            displayName: parsed.displayName || "bsilv",
+            welcomeTitle: parsed.welcomeTitle || "Bem-vindo ao Chocks",
+            planLabel: parsed.planLabel || "Plano local",
+            permissionMode: parsed.permissionMode || "ask",
+            fullAccess: !!parsed.fullAccess,
+          }
+        } catch {
+          return {
+            displayName: "bsilv",
+            welcomeTitle: "Bem-vindo ao Chocks",
+            planLabel: "Plano local",
+            permissionMode: "ask",
+            fullAccess: false,
+          }
+        }
+      }
+
+      function getLocalUser() {
+        try {
+          const raw = localStorage.getItem(USER_KEY)
+          const parsed = raw ? JSON.parse(raw) : {}
+          const id = typeof parsed.id === "string" && parsed.id.trim()
+            ? parsed.id.trim()
+            : `user_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`
+          const displayName = typeof parsed.displayName === "string" && parsed.displayName.trim()
+            ? parsed.displayName.trim()
+            : loadSettings().displayName
+          const user = { id, displayName }
+          localStorage.setItem(USER_KEY, JSON.stringify(user))
+          return user
+        } catch {
+          const user = {
+            id: `user_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`,
+            displayName: loadSettings().displayName,
+          }
+          localStorage.setItem(USER_KEY, JSON.stringify(user))
+          return user
+        }
+      }
+
+      function syncLocalUserDisplayName() {
+        const user = getLocalUser()
+        const settings = loadSettings()
+        const nextUser = { ...user, displayName: settings.displayName }
+        localStorage.setItem(USER_KEY, JSON.stringify(nextUser))
+        return nextUser
+      }
+
+      function saveSettings(settings) {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+      }
+
+      function loadChatApprovals() {
+        try {
+          const raw = localStorage.getItem(APPROVALS_KEY)
+          const parsed = raw ? JSON.parse(raw) : {}
+          return parsed && typeof parsed === "object" ? parsed : {}
+        } catch {
+          return {}
+        }
+      }
+
+      function saveChatApprovals(state) {
+        localStorage.setItem(APPROVALS_KEY, JSON.stringify(state || {}))
+      }
+
+      function getApprovedToolsForChat(chatId = getActiveChatId()) {
+        if (!chatId) return []
+        const state = loadChatApprovals()
+        const approved = state?.[chatId]
+        return Array.isArray(approved) ? approved.map((item) => String(item || "").trim()).filter(Boolean) : []
+      }
+
+      function approveToolForChat(chatId, tool) {
+        if (!chatId || !tool) return
+        const state = loadChatApprovals()
+        const current = Array.isArray(state?.[chatId]) ? state[chatId] : []
+        if (!current.includes(tool)) {
+          state[chatId] = [...current, tool]
+          saveChatApprovals(state)
+        }
+      }
+
+      function clearChatApprovals(chatId) {
+        if (!chatId) return
+        const state = loadChatApprovals()
+        if (Object.prototype.hasOwnProperty.call(state, chatId)) {
+          delete state[chatId]
+          saveChatApprovals(state)
+        }
+      }
+
+      function getWorkspaceMode() {
+        return localStorage.getItem(WORKSPACE_KEY) || "conversations"
+      }
+
+      function setWorkspaceMode(mode) {
+        localStorage.setItem(WORKSPACE_KEY, mode)
+      }
+
+      function loadFileBrowserState() {
+        try {
+          const raw = localStorage.getItem(FILE_BROWSER_KEY)
+          const parsed = raw ? JSON.parse(raw) : null
+          if (!parsed || typeof parsed !== "object") return null
+          return {
+            path: typeof parsed.path === "string" ? parsed.path : "",
+            entries: Array.isArray(parsed.entries) ? parsed.entries : [],
+          }
+        } catch {
+          return null
+        }
+      }
+
+      function saveFileBrowserState(state) {
+        fileBrowserState = state
+        localStorage.setItem(FILE_BROWSER_KEY, JSON.stringify(state || {}))
+      }
+
+      function loadFilePreviewState() {
+        try {
+          const raw = localStorage.getItem(FILE_PREVIEW_KEY)
+          const parsed = raw ? JSON.parse(raw) : null
+          if (!parsed || typeof parsed !== "object") return null
+          return {
+            path: typeof parsed.path === "string" ? parsed.path : "",
+            mode: typeof parsed.mode === "string" ? parsed.mode : "empty",
+            content: typeof parsed.content === "string" ? parsed.content : "",
+            mime: typeof parsed.mime === "string" ? parsed.mime : "",
+            updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : "",
+          }
+        } catch {
+          return null
+        }
+      }
+
+      function saveFilePreviewState(state) {
+        filePreviewState = state
+        localStorage.setItem(FILE_PREVIEW_KEY, JSON.stringify(state || {}))
+      }
+
+      function clearFilePreviewState() {
+        filePreviewState = null
+        localStorage.removeItem(FILE_PREVIEW_KEY)
+      }
+
+      function loadWorkflowArchive() {
+        try {
+          const raw = localStorage.getItem(WORKFLOW_ARCHIVE_KEY)
+          const parsed = raw ? JSON.parse(raw) : {}
+          return parsed && typeof parsed === "object" ? parsed : {}
+        } catch {
+          return {}
+        }
+      }
+
+      function saveWorkflowArchive(state) {
+        localStorage.setItem(WORKFLOW_ARCHIVE_KEY, JSON.stringify(state || {}))
+      }
+
+      function getArchivedWorkflowForChat(chatId = getActiveChatId()) {
+        if (!chatId) return null
+        const archive = loadWorkflowArchive()
+        return archive?.[chatId] || null
+      }
+
+      function setArchivedWorkflowForChat(chatId, workflow) {
+        if (!chatId || !workflow) return
+        const archive = loadWorkflowArchive()
+        archive[chatId] = workflow
+        saveWorkflowArchive(archive)
+      }
+
+      function clearArchivedWorkflowForChat(chatId) {
+        if (!chatId) return
+        const archive = loadWorkflowArchive()
+        if (Object.prototype.hasOwnProperty.call(archive, chatId)) {
+          delete archive[chatId]
+          saveWorkflowArchive(archive)
+        }
+      }
+
+      function getPermissionCategories() {
+        return {
+          leitura: ["file_read", "glob", "grep", "todo_list", "workflow_get", "env_get", "pwd", "ls_safe"],
+          escrita: ["file_write", "file_edit", "file_copy", "file_move", "directory_create", "todo_add", "todo_update", "workflow_replace", "workflow_update_step", "workflow_clear"],
+          exclusao: ["file_delete"],
+          web: ["web_fetch"],
+          shell: ["bash_exec"],
+        }
+      }
+
+      function revokeToolForChat(chatId, tool) {
+        if (!chatId || !tool) return
+        const state = loadChatApprovals()
+        const current = Array.isArray(state?.[chatId]) ? state[chatId] : []
+        state[chatId] = current.filter((item) => item !== tool)
+        if (state[chatId].length === 0) delete state[chatId]
+        saveChatApprovals(state)
+      }
+
+      function approveCategoryForChat(chatId, category) {
+        const categories = getPermissionCategories()
+        const tools = categories?.[category] || []
+        tools.forEach((tool) => approveToolForChat(chatId, tool))
+      }
+
+      function revokeCategoryForChat(chatId, category) {
+        const categories = getPermissionCategories()
+        const tools = categories?.[category] || []
+        tools.forEach((tool) => revokeToolForChat(chatId, tool))
+      }
+
+      function isImagePath(pathText) {
+        const lower = String(pathText || "").toLowerCase()
+        return IMAGE_EXTENSIONS.some((ext) => lower.endsWith(ext))
+      }
+
+      function applySettingsToUi() {
+        const settings = loadSettings()
+        profileNameEl.textContent = settings.displayName
+        profilePlanEl.textContent = settings.planLabel
+        if (welcomeBadgeEls[0]) welcomeBadgeEls[0].textContent = settings.planLabel
+        if (welcomeTitleEl) welcomeTitleEl.innerHTML = `<span class="spark">*</span>${escapeHtml(settings.welcomeTitle)}`
+        if (fullAccessToggleEl) {
+          fullAccessToggleEl.textContent = settings.fullAccess ? "Acesso total: on" : "Acesso total: off"
+          fullAccessToggleEl.classList.toggle("danger", !!settings.fullAccess)
+        }
+        if (welcomeFullAccessBadgeEl) {
+          welcomeFullAccessBadgeEl.hidden = !settings.fullAccess
+        }
+      }
+
+      function toggleFullAccess() {
+        const settings = loadSettings()
+        saveSettings({
+          ...settings,
+          fullAccess: !settings.fullAccess,
+        })
+        applySettingsToUi()
+        loadToolStatuses()
+        showToast(!settings.fullAccess ? "Acesso total ativado" : "Acesso total desativado")
+      }
+
+      function showToast(message) {
+        toastEl.textContent = message
+        toastEl.hidden = false
+        if (toastTimer) window.clearTimeout(toastTimer)
+        toastTimer = window.setTimeout(() => {
+          toastEl.hidden = true
+        }, 2200)
+      }
+
+      function isSidebarCollapsed() {
+        return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1"
+      }
+
+      function setSidebarCollapsed(collapsed) {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "1" : "0")
+      }
+
+      function applySidebarState() {
+        const collapsed = isSidebarCollapsed()
+        if (!appEl) return
+        appEl.classList.toggle("sidebar-collapsed", collapsed)
+        if (toggleSidebarButtonEl) {
+          toggleSidebarButtonEl.title = collapsed ? "Expandir sidebar" : "Colapsar sidebar"
+          toggleSidebarButtonEl.setAttribute("aria-label", collapsed ? "Expandir sidebar" : "Colapsar sidebar")
+        }
+      }
+
+      function openSettingsOverlay() {
+        const settings = loadSettings()
+        settingsDisplayNameEl.value = settings.displayName
+        settingsWelcomeTitleEl.value = settings.welcomeTitle
+        settingsPlanLabelEl.value = settings.planLabel
+        settingsPermissionModeEl.value = settings.permissionMode || "ask"
+        settingsFullAccessEl.checked = !!settings.fullAccess
+        settingsOverlayEl.hidden = false
+      }
+
+      function applySuggestionPrompt(promptText) {
+        if (!promptText) return
+        const isChatOpen = !chatViewEl.hidden
+        if (isChatOpen) {
+          chatPromptEl.value = promptText
+          chatPromptEl.focus()
+          return
+        }
+        welcomePromptEl.value = promptText
+        welcomePromptEl.focus()
+      }
+
+      function syncStreamingUi() {
+        composerEls.forEach((el) => {
+          el.classList.toggle("is-busy", isStreaming)
+        })
+
+        const sendLabel = isStreaming ? "x" : "^"
+        welcomeSendEl.textContent = sendLabel
+        chatSendEl.textContent = sendLabel
+        welcomeSendEl.classList.toggle("cancel", isStreaming)
+        chatSendEl.classList.toggle("cancel", isStreaming)
+        if (isStreaming) {
+          const chat = getActiveChat()
+          const activity = getLatestActivity(chat)
+          statusEl.textContent = activity ? `${activity.label.toLowerCase()}: ${activity.text}` : "Chocks esta respondendo..."
+          return
+        }
+        statusEl.textContent = getWorkflowStatusCopy()
+      }
+
+      function setAttachmentFeedback(kind, message = "", isError = false) {
+        const el = kind === "welcome" ? welcomeAttachmentFeedbackEl : chatAttachmentFeedbackEl
+        if (!message) {
+          el.hidden = true
+          el.textContent = ""
+          el.classList.remove("error")
+          return
+        }
+        el.hidden = false
+        el.textContent = message
+        el.classList.toggle("error", isError)
+      }
+
+      function renderAttachmentList(container, attachments, kind) {
+        container.hidden = attachments.length === 0
+        container.innerHTML = attachments
+          .map((attachment, index) => {
+            return `
+              <div class="attachment-chip">
+                <span>${escapeHtml(attachment.name)}</span>
+                <button class="attachment-remove" data-attachment-kind="${kind}" data-attachment-index="${index}" type="button">x</button>
+              </div>
+            `
+          })
+          .join("")
+
+        container.querySelectorAll(".attachment-remove").forEach((button) => {
+          button.addEventListener("click", () => {
+            const idx = Number(button.getAttribute("data-attachment-index"))
+            if (kind === "welcome") {
+              welcomeAttachments = welcomeAttachments.filter((_, itemIndex) => itemIndex !== idx)
+              renderAttachmentList(welcomeAttachmentsEl, welcomeAttachments, "welcome")
+            } else {
+              chatAttachments = chatAttachments.filter((_, itemIndex) => itemIndex !== idx)
+              renderAttachmentList(chatAttachmentsEl, chatAttachments, "chat")
+            }
+          })
+        })
+      }
+
+      function formatAttachmentsForPrompt(attachments) {
+        if (!attachments.length) return ""
+        return attachments
+          .map((attachment) => {
+            const preview = attachment.content.length > 4000
+              ? `${attachment.content.slice(0, 4000)}\n[arquivo truncado]`
+              : attachment.content
+            return `Arquivo anexado: ${attachment.name}\n${preview}`
+          })
+          .join("\n\n")
+      }
+
+      function getSettingsCards() {
+        const settings = loadSettings()
+        return [
+          { title: "Nome exibido", copy: settings.displayName, chips: ["perfil"] },
+          { title: "Titulo da home", copy: settings.welcomeTitle, chips: ["boas-vindas"] },
+          { title: "Badge principal", copy: settings.planLabel, chips: ["badge"] },
+          { title: "Permissoes", copy: settings.permissionMode === "auto" ? "Auto" : settings.permissionMode === "read_only" ? "Read-only" : "Ask", chips: ["seguranca"] },
+          { title: "Acesso total", copy: settings.fullAccess ? "Ativado" : "Desativado", chips: ["sistema"] },
+        ]
+      }
+
+      function getWorkflowProgress(workflow) {
+        const steps = Array.isArray(workflow?.steps) ? workflow.steps : []
+        const total = steps.length
+        const completed = steps.filter((step) => step.status === "completed").length
+        const running = steps.find((step) => step.status === "in_progress")
+        return { total, completed, running }
+      }
+
+      function getWorkflowStatusCopy() {
+        if (!activeWorkflow) return ""
+        const progress = getWorkflowProgress(activeWorkflow)
+        if (progress.total === 0) return "Workflow ativo"
+        if (progress.running) {
+          return `${progress.completed}/${progress.total} etapas concluidas`
+        }
+        if (progress.completed === progress.total) {
+          return "Workflow pronto para encerrar"
+        }
+        return `${progress.completed}/${progress.total} etapas concluidas`
+      }
+
+      function formatWorkflowDate(value) {
+        if (!value) return ""
+        try {
+          return new Date(value).toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        } catch {
+          return ""
+        }
+      }
+
+      function renderWorkflowPanel() {
+        const archivedWorkflow = getArchivedWorkflowForChat(getActiveChatId())
+
+        if (!activeWorkflow) {
+          sidebarPanelEl.innerHTML = `
+            <div class="workflow-list">
+              <div class="sidebar-empty">
+                O workflow aparece aqui quando o Chocks cria um plano real para uma tarefa de varias etapas.
+              </div>
+              ${archivedWorkflow ? `
+                <div class="panel-card">
+                  <div class="panel-card-title">Workflow arquivado</div>
+                  <div class="panel-card-copy">${escapeHtml(archivedWorkflow.goal || "Plano anterior")}</div>
+                  <div class="workflow-actions">
+                    <button class="listing-action" type="button" data-workflow-action="resume-archived">Retomar no chat</button>
+                    <button class="listing-action" type="button" data-workflow-action="clear-archived">Remover arquivo</button>
+                  </div>
+                </div>
+              ` : ""}
+            </div>
+          `
+          sidebarPanelEl.querySelectorAll("[data-workflow-action]").forEach((button) => {
+            button.addEventListener("click", () => handleWorkflowAction(button.getAttribute("data-workflow-action")))
+          })
+          return
+        }
+
+        const progress = getWorkflowProgress(activeWorkflow)
+        const metaParts = [`${progress.completed}/${progress.total} concluidas`]
+        const updatedLabel = formatWorkflowDate(activeWorkflow.updatedAt)
+        if (updatedLabel) metaParts.push(`atualizado ${escapeHtml(updatedLabel)}`)
+
+        sidebarPanelEl.innerHTML = `
+          <div class="workflow-list">
+            <div class="panel-card workflow-header">
+              <div class="workflow-title">${escapeHtml(activeWorkflow.goal || "Workflow ativo")}</div>
+              ${activeWorkflow.summary ? `<div class="workflow-summary">${escapeHtml(activeWorkflow.summary)}</div>` : ""}
+              <div class="workflow-meta">${metaParts.join(" | ")}</div>
+              <div class="workflow-actions">
+                <button class="listing-action" type="button" data-workflow-action="resume-active">Retomar no chat</button>
+                <button class="listing-action" type="button" data-workflow-action="archive">Arquivar</button>
+                <button class="listing-action" type="button" data-workflow-action="reset">Resetar</button>
+              </div>
+            </div>
+            <div class="workflow-steps">
+              ${activeWorkflow.steps.map((step, index) => {
+                const label =
+                  step.status === "in_progress" ? "em andamento" :
+                  step.status === "completed" ? "concluida" :
+                  "pendente"
+                return `
+                  <div class="workflow-step ${escapeHtml(step.status || "pending")}">
+                    <div class="workflow-step-dot"></div>
+                    <div class="workflow-step-copy">
+                      <div class="workflow-step-label">${escapeHtml(step.text || "Etapa")}</div>
+                      <div class="workflow-step-state">${label}</div>
+                      <div class="workflow-step-actions">
+                        <button class="listing-action" type="button" data-workflow-edit="${escapeHtml(step.id)}">Editar</button>
+                        <button class="listing-action" type="button" data-workflow-status="pending" data-workflow-step="${escapeHtml(step.id)}">Pendente</button>
+                        <button class="listing-action" type="button" data-workflow-status="in_progress" data-workflow-step="${escapeHtml(step.id)}">Em andamento</button>
+                        <button class="listing-action" type="button" data-workflow-status="completed" data-workflow-step="${escapeHtml(step.id)}">Concluir</button>
+                        <button class="listing-action" type="button" data-workflow-block="${escapeHtml(step.id)}" data-workflow-index="${index}">Marcar bloqueio</button>
+                      </div>
+                    </div>
+                  </div>
+                `
+              }).join("")}
+            </div>
+          </div>
+        `
+
+        sidebarPanelEl.querySelectorAll("[data-workflow-action]").forEach((button) => {
+          button.addEventListener("click", () => handleWorkflowAction(button.getAttribute("data-workflow-action")))
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-workflow-status]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const stepId = button.getAttribute("data-workflow-step")
+            const status = button.getAttribute("data-workflow-status")
+            if (!stepId || !status) return
+            updateWorkflowStep(stepId, { status })
+          })
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-workflow-edit]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const stepId = button.getAttribute("data-workflow-edit")
+            if (!stepId) return
+            const step = activeWorkflow?.steps?.find((item) => item.id === stepId)
+            if (!step) return
+            const nextText = window.prompt("Editar etapa:", step.text || "")
+            if (!nextText || !nextText.trim()) return
+            updateWorkflowStep(stepId, { text: nextText.trim() })
+          })
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-workflow-block]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const stepId = button.getAttribute("data-workflow-block")
+            const step = activeWorkflow?.steps?.find((item) => item.id === stepId)
+            if (!stepId || !step) return
+            const note = window.prompt("Descreva o bloqueio:", "")
+            if (!note || !note.trim()) return
+            updateWorkflowStep(stepId, {
+              status: "pending",
+              text: `[BLOQUEIO] ${step.text} - ${note.trim()}`,
+            })
+          })
+        })
+      }
+
+      async function updateWorkflowStep(stepId, patch) {
+        const chatId = getActiveChatId()
+        if (!chatId || !stepId) return
+        try {
+          await requestJson("/tools/run", {
+            method: "POST",
+            chatId,
+            headers: {
+              "x-chocks-permission-mode": "auto",
+            },
+            body: JSON.stringify({
+              chatId,
+              tool: "workflow_update_step",
+              input: {
+                id: stepId,
+                ...(typeof patch?.text === "string" ? { text: patch.text } : {}),
+                ...(typeof patch?.status === "string" ? { status: patch.status } : {}),
+              },
+              permissionMode: "auto",
+              approvedTools: getApprovedToolsForChat(chatId),
+            }),
+          })
+          await loadWorkflowStatus(chatId)
+          showToast("Workflow atualizado")
+        } catch (error) {
+          showToast(`Erro: ${String(error)}`)
+        }
+      }
+
+      async function handleWorkflowAction(action) {
+        const chatId = getActiveChatId()
+        if (!chatId || !action) return
+
+        if (action === "resume-active" && activeWorkflow) {
+          const focus = activeWorkflow.steps.find((step) => step.status === "in_progress") || activeWorkflow.steps[0]
+          const extra = focus ? `Etapa foco: ${focus.text}` : ""
+          submitMessage(`Retome esta tarefa com base no workflow atual. ${extra}`.trim(), "chat")
+          return
+        }
+
+        if (action === "resume-archived") {
+          const archived = getArchivedWorkflowForChat(chatId)
+          if (!archived) return
+          const steps = Array.isArray(archived.steps) ? archived.steps.map((step) => `- ${step.text} [${step.status}]`).join("\n") : ""
+          submitMessage(`Retome esta tarefa arquivada:\nObjetivo: ${archived.goal || ""}\n${steps}`.trim(), "chat")
+          return
+        }
+
+        if (action === "clear-archived") {
+          clearArchivedWorkflowForChat(chatId)
+          renderSidebarMode()
+          showToast("Workflow arquivado removido")
+          return
+        }
+
+        if (action === "archive") {
+          if (!activeWorkflow) return
+          setArchivedWorkflowForChat(chatId, {
+            ...activeWorkflow,
+            archivedAt: new Date().toISOString(),
+          })
+          try {
+            await requestJson("/tools/run", {
+              method: "POST",
+              chatId,
+              headers: {
+                "x-chocks-permission-mode": "auto",
+              },
+              body: JSON.stringify({
+                chatId,
+                tool: "workflow_clear",
+                input: {},
+                permissionMode: "auto",
+                approvedTools: getApprovedToolsForChat(chatId),
+              }),
+            })
+            await loadWorkflowStatus(chatId)
+            showToast("Workflow arquivado")
+          } catch (error) {
+            showToast(`Erro: ${String(error)}`)
+          }
+          return
+        }
+
+        if (action === "reset") {
+          const confirmed = window.confirm("Resetar o workflow desta conversa?")
+          if (!confirmed) return
+          try {
+            await requestJson("/tools/run", {
+              method: "POST",
+              chatId,
+              headers: {
+                "x-chocks-permission-mode": "auto",
+              },
+              body: JSON.stringify({
+                chatId,
+                tool: "workflow_clear",
+                input: {},
+                permissionMode: "auto",
+                approvedTools: getApprovedToolsForChat(chatId),
+              }),
+            })
+            await loadWorkflowStatus(chatId)
+            showToast("Workflow resetado")
+          } catch (error) {
+            showToast(`Erro: ${String(error)}`)
+          }
+        }
+      }
+
+      function loadChats() {
+        return Array.isArray(chatsState) ? chatsState : []
+      }
+
+      function saveChats(chats) {
+        chatsState = Array.isArray(chats) ? chats : []
+      }
+
+      function loadLegacyChatsFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          if (!raw) return []
+          const parsed = JSON.parse(raw)
+          return Array.isArray(parsed) ? parsed : []
+        } catch {
+          return []
+        }
+      }
+
+      function getActiveChatId() {
+        return localStorage.getItem(ACTIVE_KEY)
+      }
+
+      function setActiveChatId(id) {
+        localStorage.setItem(ACTIVE_KEY, id)
+      }
+
+      function makeTitle(text) {
+        const trimmed = String(text || "").trim()
+        if (!trimmed) return "Nova conversa"
+
+        const windowsPathMatch = trimmed.match(/[A-Za-z]:[\\/][^\r\n"'?]+?\\([^\\/\r\n"'?]+\.[A-Za-z0-9_-]+)/)
+        if (windowsPathMatch?.[1]) {
+          return windowsPathMatch[1].slice(0, 36)
+        }
+
+        const firstLine = trimmed.split("\n")[0].trim()
+        return firstLine ? firstLine.slice(0, 36) : "Nova conversa"
+      }
+
+      function createChat(seedTitle = "Nova conversa") {
+        const id = `chat_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`
+        const chat = { id, title: seedTitle, messages: [] }
+        const chats = [chat, ...loadChats()]
+        saveChats(chats)
+        setActiveChatId(id)
+        return chat
+      }
+
+      async function requestJson(url, options = {}) {
+        const localUser = getLocalUser()
+        const settings = loadSettings()
+        const approvedTools = getApprovedToolsForChat(options.chatId || getActiveChatId())
+        const response = await fetch(url, {
+          headers: {
+            "Content-Type": "application/json",
+            "x-chocks-user-id": localUser.id,
+            "x-chocks-display-name": localUser.displayName,
+            "x-chocks-full-access": settings.fullAccess ? "true" : "false",
+            "x-chocks-permission-mode": settings.permissionMode,
+            "x-chocks-approved-tools": approvedTools.join(","),
+            ...(options.headers || {}),
+          },
+          ...options,
+        })
+
+        const data = await response.json().catch(() => ({}))
+        if (!response.ok) {
+          const message = data?.error || `${response.status} ${response.statusText}`
+          throw new Error(message)
+        }
+        return data
+      }
+
+      async function refreshChatsFromServer() {
+        const data = await requestJson("/conversations")
+        const conversations = Array.isArray(data?.conversations) ? data.conversations : []
+        saveChats(conversations)
+
+        const activeId = getActiveChatId()
+        if (activeId && conversations.some((chat) => chat.id === activeId)) {
+          return conversations
+        }
+
+        if (conversations[0]?.id) {
+          setActiveChatId(conversations[0].id)
+        }
+
+        return conversations
+      }
+
+      async function migrateLegacyChatsIfNeeded() {
+        const existingChats = await refreshChatsFromServer()
+        if (existingChats.length > 0) return existingChats
+
+        const legacyChats = loadLegacyChatsFromStorage()
+        if (legacyChats.length === 0) return existingChats
+
+        for (const legacyChat of legacyChats) {
+          const normalizedChat = {
+            id: legacyChat.id || `chat_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
+            title: legacyChat.title || "Nova conversa",
+            messages: Array.isArray(legacyChat.messages) ? legacyChat.messages : [],
+          }
+          await requestJson(`/conversations/${encodeURIComponent(normalizedChat.id)}`, {
+            method: "PUT",
+            body: JSON.stringify(normalizedChat),
+          })
+        }
+
+        return refreshChatsFromServer()
+      }
+
+      async function persistChat(chat) {
+        const data = await requestJson(`/conversations/${encodeURIComponent(chat.id)}`, {
+          method: "PUT",
+          body: JSON.stringify(chat),
+        })
+        if (data?.conversation) {
+          upsertChat(data.conversation)
+          return data.conversation
+        }
+        return chat
+      }
+
+      function getActiveChat() {
+        const chats = loadChats()
+        const activeId = getActiveChatId()
+        return chats.find((chat) => chat.id === activeId) || chats[0] || null
+      }
+
+      async function renameChat(chatId) {
+        const chats = loadChats()
+        const chat = chats.find((item) => item.id === chatId)
+        if (!chat) return
+        const nextTitle = window.prompt("Novo nome da conversa:", chat.title || "Nova conversa")
+        if (!nextTitle) return
+        const title = nextTitle.trim() || "Nova conversa"
+        chat.title = title
+        saveChats(chats)
+        await requestJson(`/conversations/${encodeURIComponent(chatId)}`, {
+          method: "PATCH",
+          body: JSON.stringify({ title }),
+        })
+        renderApp()
+        showToast("Conversa renomeada")
+      }
+
+      async function duplicateChat(chatId) {
+        const chats = loadChats()
+        const chat = chats.find((item) => item.id === chatId)
+        if (!chat) return
+        const nextId = `chat_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`
+        const data = await requestJson(`/conversations/${encodeURIComponent(chatId)}/duplicate`, {
+          method: "POST",
+          body: JSON.stringify({ id: nextId }),
+        })
+        const copy = data?.conversation
+        if (!copy) throw new Error("falha ao duplicar conversa")
+        saveChats([copy, ...chats])
+        setActiveChatId(copy.id)
+        await loadWorkflowStatus(copy.id)
+        renderApp()
+        showToast("Conversa duplicada")
+      }
+
+      async function deleteChat(chatId) {
+        const chats = loadChats()
+        const chat = chats.find((item) => item.id === chatId)
+        if (!chat) return
+        const confirmed = window.confirm(`Excluir a conversa "${chat.title || "Nova conversa"}"?`)
+        if (!confirmed) return
+        await requestJson(`/conversations/${encodeURIComponent(chatId)}`, {
+          method: "DELETE",
+        })
+        clearChatApprovals(chatId)
+        clearArchivedWorkflowForChat(chatId)
+        const nextChats = chats.filter((item) => item.id !== chatId)
+        saveChats(nextChats)
+        openMenuChatId = null
+
+        if (nextChats.length === 0) {
+          const fresh = createChat()
+          setActiveChatId(fresh.id)
+          await requestJson("/conversations", {
+            method: "POST",
+            body: JSON.stringify({ id: fresh.id, title: fresh.title }),
+          })
+          await loadWorkflowStatus(fresh.id)
+        } else if (getActiveChatId() === chatId) {
+          setActiveChatId(nextChats[0].id)
+          await loadWorkflowStatus(nextChats[0].id)
+        }
+
+        renderApp()
+        showToast("Conversa excluida")
+      }
+
+      function upsertChat(updatedChat) {
+        const chats = loadChats()
+        const index = chats.findIndex((chat) => chat.id === updatedChat.id)
+        if (index === -1) chats.unshift(updatedChat)
+        else chats[index] = updatedChat
+        saveChats(chats)
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;")
+      }
+
+      function tryParseJson(text) {
+        if (typeof text !== "string") return null
+        const trimmed = text.trim()
+        if (!trimmed) return null
+        try {
+          return JSON.parse(trimmed)
+        } catch {
+          return null
+        }
+      }
+
+      function formatTraceText(text) {
+        const parsed = tryParseJson(text)
+        if (parsed === null) return escapeHtml(text || "")
+        return escapeHtml(JSON.stringify(parsed, null, 2))
+      }
+
+      function isPermissionBlockedOutput(text) {
+        const parsed = tryParseJson(text)
+        return !!(parsed && parsed.ok === false && typeof parsed.error === "string" && parsed.error.includes("permission blocked:"))
+      }
+
+      function getToolUiMeta(tool) {
+        const normalized = String(tool || "").trim()
+        const map = {
+          file_read: { label: "Lendo arquivo", noun: "leitura de arquivo", destructive: false },
+          file_write: { label: "Salvando arquivo", noun: "gravacao de arquivo", destructive: false },
+          file_edit: { label: "Editando arquivo", noun: "edicao de arquivo", destructive: false },
+          file_copy: { label: "Copiando item", noun: "copia de item", destructive: false },
+          file_delete: { label: "Excluindo arquivo", noun: "exclusao de arquivo", destructive: true },
+          file_move: { label: "Movendo item", noun: "movimentacao de item", destructive: true },
+          directory_create: { label: "Criando pasta", noun: "criacao de pasta", destructive: false },
+          glob: { label: "Buscando arquivos", noun: "busca de arquivos", destructive: false },
+          grep: { label: "Procurando no conteudo", noun: "busca no conteudo", destructive: false },
+          bash_exec: { label: "Executando comando", noun: "execucao de comando", destructive: true },
+          web_fetch: { label: "Acessando web", noun: "acesso web", destructive: false },
+          todo_list: { label: "Lendo tarefas", noun: "leitura de tarefas", destructive: false },
+          todo_add: { label: "Criando tarefa", noun: "criacao de tarefa", destructive: false },
+          todo_update: { label: "Atualizando tarefa", noun: "atualizacao de tarefa", destructive: false },
+          workflow_get: { label: "Lendo workflow", noun: "leitura de workflow", destructive: false },
+          workflow_replace: { label: "Atualizando workflow", noun: "atualizacao de workflow", destructive: false },
+          workflow_update_step: { label: "Atualizando etapa", noun: "atualizacao de etapa", destructive: false },
+          workflow_clear: { label: "Limpando workflow", noun: "limpeza de workflow", destructive: false },
+          env_get: { label: "Lendo ambiente", noun: "leitura de ambiente", destructive: false },
+          pwd: { label: "Lendo pasta atual", noun: "leitura da pasta atual", destructive: false },
+          ls_safe: { label: "Listando pasta", noun: "listagem de pasta", destructive: false },
+        }
+        return map[normalized] || { label: normalized, noun: normalized, destructive: false }
+      }
+
+      function formatToolExecutionMessage(tool, result, args) {
+        const toolMeta = getToolUiMeta(tool)
+        if (!result?.ok) {
+          const errorText = typeof result?.error === "string" ? result.error : "A acao falhou."
+          return `Acao autorizada, mas houve erro em ${toolMeta.noun}.\n\n${errorText}`
+        }
+
+        const output = result?.output
+
+        if (tool === "file_delete" && output?.deleted) {
+          return `Acao autorizada. Arquivo excluido: ${output.path}.`
+        }
+
+        if (tool === "file_write" && output?.path) {
+          return `Acao autorizada. Arquivo salvo: ${output.path}.`
+        }
+
+        if (tool === "file_edit" && output?.changed) {
+          return `Acao autorizada. Arquivo atualizado: ${output.path}.`
+        }
+
+        if (tool === "file_move" && output?.to_path) {
+          return `Acao autorizada. Item movido para: ${output.to_path}.`
+        }
+
+        if (tool === "file_copy" && output?.to_path) {
+          return `Acao autorizada. Item copiado para: ${output.to_path}.`
+        }
+
+        if (tool === "directory_create" && output?.path) {
+          return `Acao autorizada. Pasta criada: ${output.path}.`
+        }
+
+        if (tool === "bash_exec" && output) {
+          const stdout = String(output.stdout || "").trim()
+          const stderr = String(output.stderr || "").trim()
+          if (stdout) return `Acao autorizada. Comando executado com sucesso.\n\n${stdout}`
+          if (stderr) return `Acao autorizada. O comando retornou:\n\n${stderr}`
+          return "Acao autorizada. Comando executado."
+        }
+
+        if (tool === "web_fetch" && output?.status) {
+          return `Acao autorizada. Requisicao concluida com status ${output.status}.`
+        }
+
+        if (tool === "ls_safe" && output?.path) {
+          return `Acao autorizada. Pasta listada: ${output.path}.`
+        }
+
+        if (tool === "file_read" && typeof output === "string") {
+          return `Acao autorizada. Conteudo de ${args?.path || "arquivo"}:\n\n${output}`
+        }
+
+        return `Acao autorizada. ${toolMeta.label} concluido com sucesso.`
+      }
+
+      function getBlockedPermissionRequest(message) {
+        const trace = Array.isArray(message?.trace) ? message.trace : []
+        const toolCalls = new Map()
+
+        trace.forEach((entry) => {
+          if (entry?.type === "tool_call") {
+            toolCalls.set(entry.call_id, entry.name)
+            return
+          }
+          if (entry?.type !== "tool_output") return
+          if (!isPermissionBlockedOutput(String(entry.output || ""))) return
+
+          const toolName = toolCalls.get(entry.call_id) || "acao"
+          const args = toolCalls.has(entry.call_id)
+            ? trace.find((item) => item?.type === "tool_call" && item.call_id === entry.call_id)?.arguments || "{}"
+            : "{}"
+
+          return { toolName, args }
+        })
+
+        for (let index = trace.length - 1; index >= 0; index -= 1) {
+          const entry = trace[index]
+          if (entry?.type !== "tool_output") continue
+          if (!isPermissionBlockedOutput(String(entry.output || ""))) continue
+          const toolName = toolCalls.get(entry.call_id) || "acao"
+          const toolCall = trace.find((item) => item?.type === "tool_call" && item.call_id === entry.call_id)
+          return {
+            toolName,
+            args: toolCall?.arguments || "{}",
+          }
+        }
+
+        return null
+      }
+
+      async function appendToolExecutionResult(chatId, tool, args, result) {
+        const chats = loadChats()
+        const chat = chats.find((item) => item.id === chatId)
+        if (!chat) return null
+
+        const callId = `approved_${Date.now()}`
+        chat.messages.push({
+          role: "agent",
+          content: formatToolExecutionMessage(tool, result, args),
+          trace: [
+            { type: "tool_call", name: tool, call_id: callId, arguments: JSON.stringify(args || {}) },
+            { type: "tool_output", call_id: callId, output: JSON.stringify(result || {}) },
+          ],
+          streaming: false,
+        })
+        upsertChat(chat)
+        await persistChat(chat)
+        await loadWorkflowStatus(chatId)
+        renderApp()
+        return chat
+      }
+
+      async function continueAfterApproval(chatId, tool, args) {
+        let chat = getActiveChat()
+        if (!chat || chat.id !== chatId) {
+          const chats = loadChats()
+          chat = chats.find((item) => item.id === chatId) || null
+        }
+        if (!chat) return
+
+        const toolMeta = getToolUiMeta(tool)
+        chat.messages.push({ role: "agent", content: "", trace: [], streaming: true })
+        upsertChat(chat)
+        renderApp()
+        await persistChat(chat)
+
+        isStreaming = true
+        activeStreamAbortController = new AbortController()
+        syncStreamingUi()
+
+        const requestMessages = [
+          ...buildApiMessages(chat),
+          {
+            role: "user",
+            content: `Permissao concedida para ${toolMeta.noun} com os argumentos ${JSON.stringify(args || {})}. Continue a tarefa a partir do resultado mais recente sem repetir o que ja foi feito.`,
+          },
+        ]
+
+        try {
+          await consumeChatStream(chat.id, requestMessages, activeStreamAbortController.signal)
+        } catch (error) {
+          chat = getActiveChat() || chat
+          const lastMessage = chat.messages[chat.messages.length - 1]
+          if (lastMessage?.role === "agent") {
+            if (String(error).includes("AbortError")) {
+              lastMessage.content = `${lastMessage.content || ""}\n\n[resposta cancelada]`.trim()
+            } else {
+              lastMessage.content = `Erro: ${String(error)}`
+            }
+            lastMessage.trace = []
+            lastMessage.streaming = false
+          } else {
+            chat.messages.push({ role: "agent", content: `Erro: ${String(error)}`, trace: [], streaming: false })
+          }
+          upsertChat(chat)
+          await persistChat(chat)
+          renderApp()
+        } finally {
+          isStreaming = false
+          activeStreamAbortController = null
+          const latestChat = getActiveChat()
+          const latestMessage = latestChat?.messages?.[latestChat.messages.length - 1]
+          if (latestMessage?.role === "agent") {
+            latestMessage.streaming = false
+            upsertChat(latestChat)
+            await persistChat(latestChat)
+          }
+          syncStreamingUi()
+          await loadWorkflowStatus(chatId)
+          renderApp()
+        }
+      }
+
+      async function handleApprovalAction(chatId, encodedTool, encodedArgs, buttonEl, allowAlways = false) {
+        const tool = decodeURIComponent(encodedTool)
+        let args = {}
+        try {
+          args = JSON.parse(decodeURIComponent(encodedArgs) || "{}")
+        } catch {
+          showToast("Nao foi possivel ler os argumentos da acao")
+          return
+        }
+
+        const button = buttonEl instanceof HTMLElement ? buttonEl : null
+        if (button) {
+          button.disabled = true
+          button.textContent = "Executando..."
+        }
+
+        if (allowAlways) {
+          approveToolForChat(chatId, tool)
+        }
+
+        try {
+          const result = await requestJson("/tools/run", {
+            method: "POST",
+            chatId,
+            headers: {
+              "x-chocks-permission-mode": "auto",
+            },
+            body: JSON.stringify({
+              chatId,
+              tool,
+              input: args,
+              permissionMode: "auto",
+              approvedTools: getApprovedToolsForChat(chatId),
+            }),
+          })
+          const chat = await appendToolExecutionResult(chatId, tool, args, result)
+          showToast("Acao autorizada e executada")
+          await loadToolStatuses()
+          if (chat && result?.ok) {
+            await continueAfterApproval(chatId, tool, args)
+          }
+        } catch (error) {
+          showToast(`Erro: ${String(error)}`)
+          if (button) {
+            button.disabled = false
+            button.textContent = "Permitir agora"
+          }
+        }
+      }
+
+      function dismissPermissionRequest(buttonEl) {
+        const root = buttonEl instanceof HTMLElement ? buttonEl.closest(".permission-request") : null
+        if (root) root.remove()
+      }
+
+      async function copyTextToClipboard(text) {
+        try {
+          await navigator.clipboard.writeText(String(text || ""))
+          showToast("Caminho copiado")
+        } catch {
+          showToast("Nao foi possivel copiar")
+        }
+      }
+
+      function buildListingMessage(targetPath, entries) {
+        const normalizedPath = String(targetPath || "")
+        const title = /(^|[\\/])(desktop|area de trabalho)$/iu.test(normalizedPath) ? "Area de Trabalho" : "Pasta"
+        const sortedEntries = Array.isArray(entries)
+          ? [...entries].sort((a, b) => {
+              if (a?.type !== b?.type) return a?.type === "dir" ? -1 : 1
+              return String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR", { sensitivity: "base" })
+            })
+          : []
+        const lines = sortedEntries.map((entry) => `${entry.type === "dir" ? "Pasta" : "Arquivo"}  ${entry.name}`)
+        const summary = `${sortedEntries.length} ${sortedEntries.length === 1 ? "item encontrado" : "itens encontrados"}`
+        return `${title}\n${targetPath}\n\n${summary}\n\n${lines.join("\n") || "Vazia."}`
+      }
+
+      async function replaceListingMessage(chatId, messageIndex, targetPath, result) {
+        const chats = loadChats()
+        const chat = chats.find((item) => item.id === chatId)
+        if (!chat) return
+        const message = chat.messages?.[messageIndex]
+        if (!message || message.role !== "agent") return
+
+        const callId = `listing_${Date.now()}`
+        const entries = Array.isArray(result?.output?.entries) ? result.output.entries : []
+        saveFileBrowserState({ path: targetPath, entries })
+        message.content = buildListingMessage(targetPath, entries)
+        message.trace = [
+          { type: "tool_call", name: "ls_safe", call_id: callId, arguments: JSON.stringify({ path: targetPath }) },
+          { type: "tool_output", call_id: callId, output: JSON.stringify(result || {}) },
+        ]
+        message.streaming = false
+        upsertChat(chat)
+        await persistChat(chat)
+        renderApp()
+      }
+
+      async function refreshListingMessage(chatId, messageIndex, targetPath) {
+        const result = await requestJson("/tools/run", {
+          method: "POST",
+          chatId,
+          headers: {
+            "x-chocks-permission-mode": "auto",
+          },
+          body: JSON.stringify({
+            chatId,
+            tool: "ls_safe",
+            input: { path: targetPath },
+            permissionMode: "auto",
+            approvedTools: getApprovedToolsForChat(chatId),
+          }),
+        })
+        if (result?.ok) {
+          saveFileBrowserState({
+            path: targetPath,
+            entries: Array.isArray(result?.output?.entries) ? result.output.entries : [],
+          })
+          await replaceListingMessage(chatId, messageIndex, targetPath, result)
+        }
+      }
+
+      function buildPathCrumbs(targetPath) {
+        const normalized = String(targetPath || "").trim()
+        if (!normalized) return []
+        const windowsMatch = normalized.match(/^([A-Za-z]:)(.*)$/u)
+        if (!windowsMatch) return [{ label: normalized, path: normalized }]
+
+        const drive = windowsMatch[1]
+        const remainder = windowsMatch[2] || ""
+        const parts = remainder.split(/[\\/]+/u).filter(Boolean)
+        const crumbs = [{ label: drive, path: drive }]
+        let currentPath = drive
+        for (const part of parts) {
+          currentPath = `${currentPath}\\${part}`
+          crumbs.push({ label: part, path: currentPath })
+        }
+        return crumbs
+      }
+
+      function buildDownloadUrl(pathText) {
+        const query = encodeURIComponent(pathText)
+        const settings = loadSettings()
+        const fullAccess = settings.fullAccess ? "&fullAccess=true" : ""
+        return `/files/download?path=${query}&permissionMode=auto${fullAccess}`
+      }
+
+      function buildRawUrl(pathText) {
+        const query = encodeURIComponent(pathText)
+        const settings = loadSettings()
+        const fullAccess = settings.fullAccess ? "&fullAccess=true" : ""
+        return `/files/raw?path=${query}&permissionMode=auto${fullAccess}`
+      }
+
+      function createSiblingCopyPath(pathText, suffix = "_copia") {
+        const source = String(pathText || "")
+        const slashIndex = Math.max(source.lastIndexOf("\\"), source.lastIndexOf("/"))
+        const parent = slashIndex >= 0 ? source.slice(0, slashIndex) : ""
+        const name = slashIndex >= 0 ? source.slice(slashIndex + 1) : source
+        const dotIndex = name.lastIndexOf(".")
+        const base = dotIndex > 0 ? name.slice(0, dotIndex) : name
+        const ext = dotIndex > 0 ? name.slice(dotIndex) : ""
+        const nextName = `${base}${suffix}${ext}`
+        return parent ? `${parent}\\${nextName}` : nextName
+      }
+
+      function buildRelativePath(basePath, relativeSegment) {
+        const base = String(basePath || "").replace(/[\\\/]+$/u, "")
+        const segment = String(relativeSegment || "").trim()
+        if (!segment) return ""
+        if (/^[A-Za-z]:[\\/]/.test(segment)) return segment
+        return `${base}\\${segment.replace(/^[\\\/]+/u, "")}`
+      }
+
+      async function openFilePreview(pathText, editMode = false) {
+        const normalizedPath = String(pathText || "").trim()
+        if (!normalizedPath) return
+
+        if (isImagePath(normalizedPath)) {
+          saveFilePreviewState({
+            path: normalizedPath,
+            mode: editMode ? "image" : "image",
+            content: "",
+            mime: "image",
+            updatedAt: new Date().toISOString(),
+          })
+          if (getWorkspaceMode() === "files") renderSidebarMode()
+          return
+        }
+
+        const chatId = getActiveChatId()
+        if (!chatId) return
+
+        try {
+          const result = await requestJson("/tools/run", {
+            method: "POST",
+            chatId,
+            headers: {
+              "x-chocks-permission-mode": "auto",
+            },
+            body: JSON.stringify({
+              chatId,
+              tool: "file_read",
+              input: { path: normalizedPath },
+              permissionMode: "auto",
+              approvedTools: getApprovedToolsForChat(chatId),
+            }),
+          })
+
+          if (result?.ok && typeof result?.output === "string") {
+            saveFilePreviewState({
+              path: normalizedPath,
+              mode: editMode ? "edit" : "text",
+              content: result.output,
+              mime: "text",
+              updatedAt: new Date().toISOString(),
+            })
+            if (getWorkspaceMode() === "files") renderSidebarMode()
+            return
+          }
+
+          saveFilePreviewState({
+            path: normalizedPath,
+            mode: "binary",
+            content: "",
+            mime: "binary",
+            updatedAt: new Date().toISOString(),
+          })
+          if (getWorkspaceMode() === "files") renderSidebarMode()
+        } catch (error) {
+          saveFilePreviewState({
+            path: normalizedPath,
+            mode: "binary",
+            content: `Nao foi possivel abrir como texto: ${String(error)}`,
+            mime: "binary",
+            updatedAt: new Date().toISOString(),
+          })
+          if (getWorkspaceMode() === "files") renderSidebarMode()
+        }
+      }
+
+      async function saveFilePreviewContent() {
+        const chatId = getActiveChatId()
+        if (!chatId || !filePreviewState?.path) return
+        const textarea = sidebarPanelEl.querySelector("[data-file-preview-editor]")
+        const nextContent = textarea instanceof HTMLTextAreaElement ? textarea.value : String(filePreviewState.content || "")
+
+        try {
+          await requestJson("/tools/run", {
+            method: "POST",
+            chatId,
+            headers: {
+              "x-chocks-permission-mode": "auto",
+            },
+            body: JSON.stringify({
+              chatId,
+              tool: "file_write",
+              input: {
+                path: filePreviewState.path,
+                content: nextContent,
+              },
+              permissionMode: "auto",
+              approvedTools: getApprovedToolsForChat(chatId),
+            }),
+          })
+
+          saveFilePreviewState({
+            ...filePreviewState,
+            mode: "text",
+            content: nextContent,
+            updatedAt: new Date().toISOString(),
+          })
+          await navigateFileBrowser(fileBrowserState?.path || ".")
+          showToast("Arquivo salvo")
+        } catch (error) {
+          showToast(`Erro: ${String(error)}`)
+        }
+      }
+
+      async function navigateFileBrowser(targetPath) {
+        const chatId = getActiveChatId()
+        if (!chatId) return
+        const result = await requestJson("/tools/run", {
+          method: "POST",
+          chatId,
+          headers: {
+            "x-chocks-permission-mode": "auto",
+          },
+          body: JSON.stringify({
+            chatId,
+            tool: "ls_safe",
+            input: { path: targetPath },
+            permissionMode: "auto",
+            approvedTools: getApprovedToolsForChat(chatId),
+          }),
+        })
+        if (result?.ok) {
+          saveFileBrowserState({
+            path: targetPath,
+            entries: Array.isArray(result?.output?.entries) ? result.output.entries : [],
+          })
+          if (getWorkspaceMode() === "files") renderSidebarMode()
+        }
+      }
+
+      function renderFileBrowserPanel() {
+        if (!fileBrowserState?.path) {
+          sidebarPanelEl.innerHTML = `
+            <div class="sidebar-empty">
+              Abra uma pasta a partir do chat para fixar a navegacao de arquivos aqui.
+            </div>
+          `
+          return
+        }
+
+        const crumbs = buildPathCrumbs(fileBrowserState.path)
+        const currentPath = String(fileBrowserState.path || "")
+        const entries = Array.isArray(fileBrowserState.entries) ? fileBrowserState.entries : []
+        const sortedEntries = [...entries].sort((a, b) => {
+          if (a?.type !== b?.type) return a?.type === "dir" ? -1 : 1
+          return String(a?.name || "").localeCompare(String(b?.name || ""), "pt-BR", { sensitivity: "base" })
+        })
+
+        const previewMode = String(filePreviewState?.mode || "")
+        const previewPath = String(filePreviewState?.path || "")
+        const previewCard = !previewPath
+          ? `<div class="sidebar-empty">Selecione um arquivo para visualizar no workspace.</div>`
+          : `
+            <div class="file-preview">
+              <div class="file-preview-header">
+                <div class="file-preview-title">Preview de arquivo</div>
+                <div class="file-preview-path">${escapeHtml(previewPath)}</div>
+                <div class="file-preview-meta">
+                  ${filePreviewState?.updatedAt ? `Atualizado ${escapeHtml(formatWorkflowDate(filePreviewState.updatedAt))}` : ""}
+                </div>
+              </div>
+              <div class="file-preview-actions">
+                <button class="listing-action" type="button" data-file-preview-edit="${escapeHtml(previewPath)}">Editar</button>
+                <button class="listing-action" type="button" data-file-preview-refresh="${escapeHtml(previewPath)}">Recarregar</button>
+                <button class="listing-action" type="button" data-file-preview-download="${escapeHtml(previewPath)}">Baixar</button>
+                <button class="listing-action" type="button" data-file-preview-close="1">Fechar</button>
+              </div>
+              ${previewMode === "image"
+                ? `<img class="file-preview-image" src="${escapeHtml(buildRawUrl(previewPath))}" alt="Preview" />`
+                : previewMode === "edit"
+                  ? `<textarea class="file-preview-editor" data-file-preview-editor>${escapeHtml(filePreviewState?.content || "")}</textarea>
+                     <div class="file-preview-actions">
+                       <button class="listing-action" type="button" data-file-preview-save="1">Salvar</button>
+                       <button class="listing-action" type="button" data-file-preview-cancel-edit="1">Cancelar edicao</button>
+                     </div>`
+                  : previewMode === "binary"
+                    ? `<div class="sidebar-empty">Arquivo nao textual ou muito grande para preview direto.${filePreviewState?.content ? `<br />${escapeHtml(filePreviewState.content)}` : ""}</div>`
+                    : `<pre class="file-preview-text">${escapeHtml(filePreviewState?.content || "")}</pre>`
+              }
+            </div>
+          `
+
+        sidebarPanelEl.innerHTML = `
+          <div class="file-browser">
+            <div class="panel-card file-browser-header">
+              <div class="file-browser-breadcrumbs">
+                ${crumbs.map((crumb, index) => `<button class="file-browser-crumb${index === crumbs.length - 1 ? " current" : ""}" type="button" data-file-browser-open="${escapeHtml(crumb.path)}">${escapeHtml(crumb.label)}</button>`).join("")}
+              </div>
+              <div class="file-browser-actions">
+                <button class="listing-action" type="button" data-file-browser-up="${escapeHtml(currentPath)}">Subir</button>
+                <button class="listing-action" type="button" data-file-browser-refresh="${escapeHtml(currentPath)}">Atualizar</button>
+                <button class="listing-action" type="button" data-file-browser-copy="${escapeHtml(currentPath)}">Copiar caminho</button>
+              </div>
+              <div class="file-browser-create">
+                <div class="file-browser-create-row">
+                  <input type="text" data-file-browser-relative-folder placeholder="Nova pasta relativa (ex.: docs/notas)" />
+                  <button class="listing-action" type="button" data-file-browser-create-folder="${escapeHtml(currentPath)}">Criar pasta</button>
+                </div>
+                <div class="file-browser-create-row">
+                  <input type="text" data-file-browser-relative-file placeholder="Novo arquivo relativo (ex.: docs/todo.md)" />
+                  <button class="listing-action" type="button" data-file-browser-create-file="${escapeHtml(currentPath)}">Criar arquivo vazio</button>
+                </div>
+              </div>
+            </div>
+            <div class="file-browser-list">
+              ${sortedEntries.map((entry) => {
+                const entryPath = `${currentPath.replace(/[\\\/]+$/u, "")}\\${entry.name}`
+                return `
+                  <div class="file-browser-item">
+                    <div class="file-browser-item-main">
+                      <span class="listing-kind">${entry.type === "dir" ? "Pasta" : "Arquivo"}</span>
+                      <span class="file-browser-item-name">${escapeHtml(entry.name)}</span>
+                    </div>
+                    <div class="file-browser-item-actions">
+                      ${entry.type === "dir"
+                        ? `<button class="listing-action" type="button" data-file-browser-open="${escapeHtml(entryPath)}">Abrir</button>`
+                        : `<button class="listing-action" type="button" data-file-browser-read="${escapeHtml(entryPath)}">Preview</button>
+                           <button class="listing-action" type="button" data-file-browser-edit="${escapeHtml(entryPath)}">Editar</button>
+                           <button class="listing-action" type="button" data-file-browser-download="${escapeHtml(entryPath)}">Baixar</button>`
+                      }
+                      <button class="listing-action" type="button" data-file-browser-duplicate="${escapeHtml(entryPath)}">Duplicar</button>
+                      <button class="listing-action" type="button" data-file-browser-rename="${escapeHtml(entryPath)}">Renomear</button>
+                      <button class="listing-action" type="button" data-file-browser-move="${escapeHtml(entryPath)}">Mover</button>
+                      ${entry.type === "file" ? `<button class="listing-action" type="button" data-file-browser-delete="${escapeHtml(entryPath)}">Excluir</button>` : ""}
+                      <button class="listing-action" type="button" data-file-browser-copy="${escapeHtml(entryPath)}">Copiar caminho</button>
+                    </div>
+                  </div>
+                `
+              }).join("") || `<div class="sidebar-empty">Pasta vazia.</div>`}
+            </div>
+            ${previewCard}
+          </div>
+        `
+
+        sidebarPanelEl.querySelectorAll("[data-file-browser-open]").forEach((button) => {
+          button.addEventListener("click", () => navigateFileBrowser(button.getAttribute("data-file-browser-open")))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-refresh]").forEach((button) => {
+          button.addEventListener("click", () => navigateFileBrowser(button.getAttribute("data-file-browser-refresh")))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-copy]").forEach((button) => {
+          button.addEventListener("click", () => copyTextToClipboard(button.getAttribute("data-file-browser-copy")))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-read]").forEach((button) => {
+          button.addEventListener("click", () => openFilePreview(button.getAttribute("data-file-browser-read"), false))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-edit]").forEach((button) => {
+          button.addEventListener("click", () => openFilePreview(button.getAttribute("data-file-browser-edit"), true))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-download]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-browser-download") || "")
+            window.open(buildDownloadUrl(pathText), "_blank", "noopener,noreferrer")
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-up]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-browser-up") || "")
+            const parentPath = pathText.replace(/[\\/][^\\/]+$/u, "")
+            if (parentPath) navigateFileBrowser(parentPath)
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-create-folder]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const basePath = String(button.getAttribute("data-file-browser-create-folder") || "")
+            const inputEl = sidebarPanelEl.querySelector("[data-file-browser-relative-folder]")
+            const relativeValue = inputEl instanceof HTMLInputElement ? inputEl.value : ""
+            const nextPath = buildRelativePath(basePath, relativeValue)
+            if (!nextPath) {
+              showToast("Informe um caminho relativo para pasta")
+              return
+            }
+            handleDirectListingTool("directory_create", { path: nextPath }, "Criar pasta", {
+              chatId: getActiveChatId(),
+              refreshPath: currentPath,
+            })
+            if (inputEl instanceof HTMLInputElement) inputEl.value = ""
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-create-file]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const basePath = String(button.getAttribute("data-file-browser-create-file") || "")
+            const inputEl = sidebarPanelEl.querySelector("[data-file-browser-relative-file]")
+            const relativeValue = inputEl instanceof HTMLInputElement ? inputEl.value : ""
+            const nextPath = buildRelativePath(basePath, relativeValue)
+            if (!nextPath) {
+              showToast("Informe um caminho relativo para arquivo")
+              return
+            }
+            handleDirectListingTool("file_write", { path: nextPath, content: "" }, "Criar arquivo vazio", {
+              chatId: getActiveChatId(),
+              refreshPath: currentPath,
+            })
+            if (inputEl instanceof HTMLInputElement) inputEl.value = ""
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-duplicate]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const sourcePath = String(button.getAttribute("data-file-browser-duplicate") || "")
+            if (!sourcePath) return
+            const suggested = createSiblingCopyPath(sourcePath)
+            openRenameModal(sourcePath, (nextPath) => {
+              handleDirectListingTool("file_copy", { from_path: sourcePath, to_path: nextPath.trim() }, "Duplicar item", {
+                chatId: getActiveChatId(),
+                refreshPath: currentPath,
+              })
+            })
+            renameNewEl.value = suggested
+            renameNewEl.focus()
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-rename]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-browser-rename") || "")
+            if (!pathText) return
+            openRenameModal(pathText, (newPath) => {
+              const parentDir = pathText.replace(/[\\/][^\\/]+$/u, "")
+              const finalPath = parentDir ? `${parentDir}/${newPath.trim()}` : newPath.trim()
+              handleDirectListingTool("file_move", { from_path: pathText, to_path: finalPath }, "Renomear item", {
+                chatId: getActiveChatId(),
+                refreshPath: currentPath,
+              })
+            })
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-move]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-browser-move") || "")
+            if (!pathText) return
+            openRenameModal(pathText, (newPath) => {
+              handleDirectListingTool("file_move", { from_path: pathText, to_path: newPath.trim() }, "Mover item", {
+                chatId: getActiveChatId(),
+                refreshPath: currentPath,
+              })
+            })
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-browser-delete]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-browser-delete") || "")
+            const confirmed = window.confirm(`Excluir "${pathText}"?`)
+            if (!confirmed) return
+            handleDirectListingTool("file_delete", { path: pathText }, "Excluir arquivo", {
+              chatId: getActiveChatId(),
+              refreshPath: currentPath,
+            })
+          })
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-file-preview-edit]").forEach((button) => {
+          button.addEventListener("click", () => openFilePreview(button.getAttribute("data-file-preview-edit"), true))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-preview-refresh]").forEach((button) => {
+          button.addEventListener("click", () => openFilePreview(button.getAttribute("data-file-preview-refresh"), false))
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-preview-download]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const pathText = String(button.getAttribute("data-file-preview-download") || "")
+            window.open(buildDownloadUrl(pathText), "_blank", "noopener,noreferrer")
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-preview-close]").forEach((button) => {
+          button.addEventListener("click", () => {
+            clearFilePreviewState()
+            renderSidebarMode()
+          })
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-preview-save]").forEach((button) => {
+          button.addEventListener("click", () => saveFilePreviewContent())
+        })
+        sidebarPanelEl.querySelectorAll("[data-file-preview-cancel-edit]").forEach((button) => {
+          button.addEventListener("click", () => {
+            if (!filePreviewState?.path) return
+            openFilePreview(filePreviewState.path, false)
+          })
+        })
+      }
+
+      function triggerListingAction(action, targetPath, chatId, messageIndex, currentListingPath) {
+        const pathText = decodeURIComponent(String(targetPath || "")).trim()
+        const currentPath = decodeURIComponent(String(currentListingPath || "")).trim()
+        if (!pathText) return
+
+        if (action === "copy") {
+          copyTextToClipboard(pathText)
+          return
+        }
+
+        if (action === "download") {
+          window.open(buildDownloadUrl(pathText), "_blank", "noopener,noreferrer")
+          return
+        }
+
+        if (action === "read") {
+          openFilePreview(pathText, false)
+          setWorkspaceMode("files")
+          renderApp()
+          return
+        }
+
+        if (action === "edit") {
+          openFilePreview(pathText, true)
+          setWorkspaceMode("files")
+          renderApp()
+          return
+        }
+
+        if (action === "duplicate") {
+          const suggested = createSiblingCopyPath(pathText)
+          openRenameModal(pathText, (nextPath) => {
+            handleDirectListingTool("file_copy", { from_path: pathText, to_path: nextPath.trim() }, "Duplicar item", {
+              chatId,
+              messageIndex,
+              refreshPath: currentPath || pathText.replace(/[\\/][^\\/]+$/u, ""),
+            })
+          })
+          renameNewEl.value = suggested
+          renameNewEl.focus()
+          return
+        }
+
+        if (action === "open") {
+          handleDirectListingTool("ls_safe", { path: pathText }, "Abrir pasta", {
+            chatId,
+            messageIndex,
+            replaceListing: true,
+            replacePath: pathText,
+          })
+          return
+        }
+
+        if (action === "up") {
+          if (!pathText) return
+          handleDirectListingTool("ls_safe", { path: pathText }, "Abrir pasta", {
+            chatId,
+            messageIndex,
+            replaceListing: true,
+            replacePath: pathText,
+          })
+          return
+        }
+
+        if (action === "rename") {
+          openRenameModal(pathText, (newName) => {
+            const parentDir = pathText.replace(/[\\/][^\\/]+$/u, "")
+            const nextPath = parentDir ? `${parentDir}/${newName.trim()}` : newName.trim()
+            handleDirectListingTool("file_move", { from_path: pathText, to_path: nextPath }, `Renomear para ${newName.trim()}`, {
+              chatId,
+              messageIndex,
+              refreshPath: currentPath || parentDir,
+            })
+          })
+          return
+        }
+
+        if (action === "move") {
+          const nextPath = window.prompt("Mover para qual caminho?", pathText)
+          if (!nextPath || !nextPath.trim()) return
+          handleDirectListingTool("file_move", { from_path: pathText, to_path: nextPath.trim() }, "Mover item", {
+            chatId,
+            messageIndex,
+            refreshPath: currentPath || pathText.replace(/[\\/][^\\/]+$/u, ""),
+          })
+          return
+        }
+
+        if (action === "mkdir") {
+          const nextPath = window.prompt("Nome ou caminho da nova pasta:", pathText)
+          if (!nextPath || !nextPath.trim()) return
+          handleDirectListingTool("directory_create", { path: nextPath.trim() }, "Criar pasta", {
+            chatId,
+            messageIndex,
+            refreshPath: currentPath || pathText,
+          })
+          return
+        }
+
+        if (action === "delete") {
+          const confirmed = window.confirm(`Excluir "${pathText}"?`)
+          if (!confirmed) return
+          handleDirectListingTool("file_delete", { path: pathText }, "Excluir arquivo", {
+            chatId,
+            messageIndex,
+            refreshPath: currentPath || pathText.replace(/[\\/][^\\/]+$/u, ""),
+          })
+          return
+        }
+
+        const prompts = {
+          list: `liste a pasta "${pathText}"`,
+        }
+
+        const prompt = prompts[action]
+        if (!prompt) return
+        submitMessage(prompt, "chat")
+      }
+
+      async function handleDirectListingTool(tool, input, actionLabel, options = {}) {
+        const chatId = options.chatId || getActiveChatId()
+        if (!chatId) return
+
+        try {
+          const result = await requestJson("/tools/run", {
+            method: "POST",
+            chatId,
+            headers: {
+              "x-chocks-permission-mode": "auto",
+            },
+            body: JSON.stringify({
+              chatId,
+              tool,
+              input,
+              permissionMode: "auto",
+              approvedTools: getApprovedToolsForChat(chatId),
+            }),
+          })
+          if (result?.ok && options.replaceListing) {
+            await replaceListingMessage(chatId, options.messageIndex, options.replacePath || input?.path || ".", result)
+            showToast(`${actionLabel} concluido`)
+            return
+          }
+
+          if (result?.ok && options.refreshPath) {
+            await refreshListingMessage(chatId, options.messageIndex, options.refreshPath)
+            showToast(`${actionLabel} concluido`)
+            return
+          }
+
+          await appendToolExecutionResult(chatId, tool, input, result)
+          showToast(`${actionLabel} concluido`)
+          if (result?.ok && options.continueAfter === true) {
+            await continueAfterApproval(chatId, tool, input)
+          }
+        } catch (error) {
+          const message = String(error)
+          if (message.includes("permission blocked:")) {
+            showToast("Acao bloqueada pelas permissoes atuais. Abra Config para liberar por categoria ou por tool.")
+            return
+          }
+          showToast(`Erro: ${message}`)
+        }
+      }
+
+      window.handleApprovalAction = handleApprovalAction
+      window.dismissPermissionRequest = dismissPermissionRequest
+      window.triggerListingAction = triggerListingAction
+
+      function renderRecentList() {
+        const chats = loadChats()
+        const activeId = getActiveChatId()
+        recentListEl.innerHTML = ""
+        const filteredChats = chats.filter((chat) => {
+          if (!searchQuery) return true
+          return String(chat.title || "").toLowerCase().includes(searchQuery.toLowerCase())
+        })
+
+        if (filteredChats.length === 0) {
+          recentListEl.innerHTML = `<div class="recent-empty">${searchQuery ? "Nenhuma conversa encontrada" : "Nenhuma conversa ainda"}</div>`
+          return
+        }
+
+        filteredChats.forEach((chat) => {
+          const button = document.createElement("button")
+          button.type = "button"
+          button.className = `recent-item${chat.id === activeId ? " active" : ""}`
+          button.innerHTML = `
+            <span class="recent-label">${escapeHtml(chat.title || "Nova conversa")}</span>
+            <button class="recent-more" data-menu="${chat.id}" type="button">...</button>
+            <div class="menu" data-menu-panel="${chat.id}" ${openMenuChatId === chat.id ? "" : "hidden"}>
+              <button class="menu-item" data-action="rename" data-chat-id="${chat.id}" type="button">Renomear</button>
+              <button class="menu-item" data-action="duplicate" data-chat-id="${chat.id}" type="button">Duplicar</button>
+              <button class="menu-item danger" data-action="delete" data-chat-id="${chat.id}" type="button">Excluir</button>
+            </div>
+          `
+          button.addEventListener("click", () => {
+            setActiveChatId(chat.id)
+            openMenuChatId = null
+            loadWorkflowStatus(chat.id)
+            renderApp()
+          })
+
+          const menuButton = button.querySelector(`[data-menu="${chat.id}"]`)
+          menuButton.addEventListener("click", (event) => {
+            event.stopPropagation()
+            openMenuChatId = openMenuChatId === chat.id ? null : chat.id
+            renderRecentList()
+          })
+
+          const menuItems = button.querySelectorAll("[data-action]")
+          menuItems.forEach((item) => {
+            item.addEventListener("click", async (event) => {
+              event.stopPropagation()
+              const action = item.getAttribute("data-action")
+              const targetChatId = item.getAttribute("data-chat-id")
+              if (!targetChatId) return
+              try {
+                if (action === "rename") await renameChat(targetChatId)
+                if (action === "duplicate") await duplicateChat(targetChatId)
+                if (action === "delete") await deleteChat(targetChatId)
+              } catch (error) {
+                showToast(`Erro: ${String(error)}`)
+              }
+            })
+          })
+
+          recentListEl.appendChild(button)
+        })
+      }
+
+      function closeSearch(clearQuery = false) {
+        searchOpen = false
+        searchButtonEl.classList.remove("active")
+        if (clearQuery) {
+          searchQuery = ""
+          searchInputEl.value = ""
+        }
+      }
+
+      function openSearch() {
+        searchOpen = true
+        setWorkspaceMode("conversations")
+      }
+
+      function syncNavButtons() {
+        navButtons.forEach((button) => button.classList.remove("active"))
+        if (searchOpen) {
+          searchButtonEl.classList.add("active")
+          return
+        }
+        if (getWorkspaceMode() === "conversations") {
+          newChatButtonEl.classList.add("active")
+        }
+      }
+
+      function renderSidebarMode() {
+        const mode = getWorkspaceMode()
+        const showingConversations = mode === "conversations"
+
+        workspaceButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.workspace === mode)
+        })
+
+        if (!showingConversations) {
+          closeSearch(false)
+        }
+
+        recentListEl.hidden = !showingConversations
+        searchWrapEl.hidden = !showingConversations || !searchOpen
+        sidebarPanelEl.hidden = showingConversations
+
+        if (showingConversations) {
+          sidebarPanelEl.innerHTML = ""
+        } else {
+          recentListEl.innerHTML = ""
+        }
+
+        if (showingConversations) {
+          sidebarSectionTitleEl.textContent = searchOpen ? "Buscar" : "Recentes"
+          renderRecentList()
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "code" && toolStatuses.length > 0) {
+          sidebarSectionTitleEl.textContent = "Ferramentas"
+          sidebarPanelEl.innerHTML = `
+            <div class="tool-list">
+              ${toolStatuses
+                .map((tool) => {
+                  const stateClass = tool.enabled ? "enabled" : "disabled"
+                  const stateLabel = tool.enabled ? "ativa" : "desativada"
+                  return `
+                    <div class="tool-item">
+                      <div class="tool-header">
+                        <div class="tool-name">${escapeHtml(getToolUiMeta(tool.name).label)}</div>
+                        <div class="tool-state ${stateClass}">${stateLabel}</div>
+                      </div>
+                      <div class="tool-meta">Categoria: ${escapeHtml(tool.category)}</div>
+                      ${tool.reason ? `<div class="tool-meta">${escapeHtml(tool.reason)}</div>` : ""}
+                    </div>
+                  `
+                })
+                .join("")}
+            </div>
+          `
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "files") {
+          sidebarSectionTitleEl.textContent = "Arquivos"
+          renderFileBrowserPanel()
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "workflow") {
+          sidebarSectionTitleEl.textContent = "Workflow"
+          renderWorkflowPanel()
+          syncNavButtons()
+          return
+        }
+
+        const cards = getSettingsCards()
+        sidebarSectionTitleEl.textContent = "Config"
+        const chatId = getActiveChatId()
+        const approvedTools = getApprovedToolsForChat(chatId)
+        const categories = getPermissionCategories()
+
+        sidebarPanelEl.innerHTML = cards
+          .map((card) => {
+            const chips = Array.isArray(card.chips)
+              ? `<div class="panel-chip-row">${card.chips.map((chip) => `<span class="panel-chip">${escapeHtml(chip)}</span>`).join("")}</div>`
+              : ""
+            return `
+              <div class="panel-card">
+                <div class="panel-card-title">${escapeHtml(card.title)}</div>
+                <div class="panel-card-copy">${escapeHtml(card.copy)}</div>
+                ${chips}
+              </div>
+            `
+          })
+          .join("") + `
+            <div class="panel-card permission-manager">
+              <div class="panel-card-title">Permissoes ativas nesta conversa</div>
+              <div class="panel-card-copy">
+                ${approvedTools.length > 0 ? `${approvedTools.length} permissoes liberadas.` : "Nenhuma permissao persistente ativa."}
+              </div>
+              <div class="permission-pill-row">
+                ${Object.keys(categories)
+                  .map((category) => {
+                    const tools = categories[category] || []
+                    const enabled = tools.some((tool) => approvedTools.includes(tool))
+                    return `<button class="permission-pill ${enabled ? "active" : ""}" type="button" data-permission-category="${escapeHtml(category)}">${escapeHtml(category)}</button>`
+                  })
+                  .join("")}
+              </div>
+              <div class="permission-pill-row">
+                ${approvedTools
+                  .map((tool) => `<button class="permission-pill active" type="button" data-permission-revoke="${escapeHtml(tool)}">revogar ${escapeHtml(tool)}</button>`)
+                  .join("")}
+              </div>
+              <div class="file-browser-actions">
+                <button class="listing-action" type="button" data-permission-clear-all="1">Revogar tudo</button>
+              </div>
+            </div>
+          `
+
+        sidebarPanelEl.querySelectorAll("[data-permission-category]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const category = button.getAttribute("data-permission-category")
+            if (!chatId || !category) return
+            const hasAny = (categories[category] || []).some((tool) => approvedTools.includes(tool))
+            if (hasAny) revokeCategoryForChat(chatId, category)
+            else approveCategoryForChat(chatId, category)
+            await loadToolStatuses()
+            renderSidebarMode()
+          })
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-permission-revoke]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const tool = button.getAttribute("data-permission-revoke")
+            if (!chatId || !tool) return
+            revokeToolForChat(chatId, tool)
+            await loadToolStatuses()
+            renderSidebarMode()
+          })
+        })
+
+        sidebarPanelEl.querySelectorAll("[data-permission-clear-all]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            if (!chatId) return
+            clearChatApprovals(chatId)
+            await loadToolStatuses()
+            renderSidebarMode()
+          })
+        })
+        syncNavButtons()
+      }
+
+      function renderTrace(trace, options = {}) {
+        if (!Array.isArray(trace) || trace.length === 0) return ""
+        const chatId = options.chatId || ""
+        const grouped = []
+        const byCallId = new Map()
+
+        trace.forEach((entry) => {
+          if (entry.type === "tool_call") {
+            const group = {
+              callId: entry.call_id,
+              name: entry.name,
+              arguments: entry.arguments || "",
+              output: "",
+              status: "pending",
+            }
+            byCallId.set(entry.call_id, group)
+            grouped.push(group)
+            return
+          }
+
+          const match = byCallId.get(entry.call_id)
+          if (!match) return
+          match.output = String(entry.output || "")
+          match.status = match.output.includes('"ok":false') ? "error" : "complete"
+        })
+
+        function renderLsSafePayload(text, kind) {
+          const parsed = tryParseJson(text)
+          if (!parsed || typeof parsed !== "object") return ""
+
+          if (kind === "arguments") {
+            const targetPath = typeof parsed.path === "string" ? parsed.path : ""
+            if (!targetPath) return ""
+            return `
+              <div class="trace-rich">
+                <div class="trace-rich-summary">
+                  <div class="trace-rich-path">${escapeHtml(targetPath)}</div>
+                </div>
+              </div>
+            `
+          }
+
+          if (!parsed.ok || !parsed.output || typeof parsed.output !== "object") return ""
+          const targetPath = typeof parsed.output.path === "string" ? parsed.output.path : ""
+          const entries = Array.isArray(parsed.output.entries) ? parsed.output.entries : []
+          const preview = entries.slice(0, 10)
+          const suffix =
+            entries.length > preview.length
+              ? `<div class="trace-rich-count">Mostrando ${preview.length} de ${entries.length} itens.</div>`
+              : ""
+
+          return `
+            <div class="trace-rich">
+              <div class="trace-rich-summary">
+                ${targetPath ? `<div class="trace-rich-path">${escapeHtml(targetPath)}</div>` : ""}
+                <div class="trace-rich-count">${entries.length} ${entries.length === 1 ? "item" : "itens"}</div>
+              </div>
+              ${
+                preview.length > 0
+                  ? `<ul class="trace-rich-list">${preview
+                      .map((entry) => {
+                        const kindLabel = entry?.type === "dir" ? "Pasta" : "Arquivo"
+                        const name = typeof entry?.name === "string" ? entry.name : ""
+                        return `<li class="trace-rich-item"><span class="trace-rich-kind">${kindLabel}</span><span class="trace-rich-name">${escapeHtml(name)}</span></li>`
+                      })
+                      .join("")}</ul>`
+                  : `<div class="trace-rich-count">Sem itens.</div>`
+              }
+              ${suffix}
+            </div>
+          `
+        }
+
+        function renderTraceBlock(group, kind) {
+          const rawText =
+            kind === "arguments" ? String(group.arguments || "{}") :
+            group.status === "pending" ? "Aguardando retorno..." :
+            String(group.output || "")
+
+          if (group.name === "ls_safe") {
+            const rich = renderLsSafePayload(rawText, kind)
+            if (rich) return rich
+          }
+
+          if (kind === "output" && isPermissionBlockedOutput(rawText)) {
+            const encodedTool = encodeURIComponent(group.name)
+            const encodedArgs = encodeURIComponent(String(group.arguments || "{}"))
+            const toolMeta = getToolUiMeta(group.name)
+            return `
+              <div class="permission-request">
+                <div class="permission-request-title">Acao aguardando permissao</div>
+                <div class="permission-request-copy">
+                  O Chocks pediu autorizacao para <strong>${escapeHtml(toolMeta.noun)}</strong>.
+                  ${toolMeta.destructive ? ` Esta e uma acao sensivel e pode alterar ou remover dados.` : ""}
+                </div>
+                <div class="permission-request-actions">
+                  <button class="permission-request-button primary" type="button" onclick="window.handleApprovalAction('${escapeHtml(chatId)}','${encodedTool}','${encodedArgs}', this, false)">Permitir agora</button>
+                  <button class="permission-request-button" type="button" onclick="window.handleApprovalAction('${escapeHtml(chatId)}','${encodedTool}','${encodedArgs}', this, true)">Permitir sempre nesta conversa</button>
+                  <button class="permission-request-button" type="button" onclick="window.dismissPermissionRequest(this)">Dispensar</button>
+                </div>
+                <pre class="trace-pre">${formatTraceText(rawText)}</pre>
+              </div>
+            `
+          }
+
+          return `<pre class="trace-pre">${formatTraceText(rawText)}</pre>`
+        }
+
+        const pendingCount = grouped.filter((group) => group.status === "pending").length
+        const errorCount = grouped.filter((group) => group.status === "error").length
+        const subtitle =
+          pendingCount > 0 ? `${pendingCount} em andamento` :
+          errorCount > 0 ? `${errorCount} com erro` :
+          "Expandir detalhes"
+        const shellOpen = pendingCount > 0 || errorCount > 0 ? "open" : ""
+
+        const entries = grouped
+          .map((group) => {
+            const isOpen = group.status === "pending" || group.status === "error" ? "open" : ""
+            const label =
+              group.status === "pending" ? "rodando" :
+              group.status === "error" ? "erro" :
+              "concluida"
+            const icon =
+              group.status === "pending" ? "..." :
+              group.status === "error" ? "!" :
+              "ok"
+
+            return `
+              <details class="trace-card" ${isOpen}>
+                <summary class="trace-summary">
+                  <div class="trace-summary-main">
+                    <span class="trace-summary-icon">${icon}</span>
+                    <span class="trace-summary-name">${escapeHtml(getToolUiMeta(group.name).label)}</span>
+                  </div>
+                  <span class="trace-summary-state ${group.status}">${label}</span>
+                </summary>
+                <div class="trace-body">
+                  <div class="trace-block">
+                    <div class="trace-label">Argumentos</div>
+                    ${renderTraceBlock(group, "arguments")}
+                  </div>
+                  <div class="trace-block">
+                    <div class="trace-label">Resultado</div>
+                    ${renderTraceBlock(group, "output")}
+                  </div>
+                </div>
+              </details>
+            `
+          })
+          .join("")
+
+        const countLabel = `${grouped.length} ${grouped.length === 1 ? "ferramenta" : "ferramentas"}`
+        return `
+          <div class="trace">
+            <details class="trace-shell" ${shellOpen}>
+              <summary class="trace-shell-summary">
+                <div class="trace-shell-main">
+                  <span class="trace-shell-icon">+</span>
+                  <div class="trace-shell-copy">
+                    <span class="trace-shell-label">Ferramentas usadas</span>
+                    <span class="trace-shell-subtitle">${subtitle}</span>
+                  </div>
+                </div>
+                <span class="trace-count">${countLabel}</span>
+              </summary>
+              <div class="trace-shell-body">${entries}</div>
+            </details>
+          </div>
+        `
+      }
+
+      function renderBubbleContent(message, options = {}) {
+        function parseDirectoryListing(content) {
+          if (typeof content !== "string") return null
+          const lines = content.split("\n").map((line) => line.trim()).filter(Boolean)
+          if (lines.length < 3) return null
+
+          const title = lines[0]
+          const targetPath = lines[1]
+          const countLine = lines[2]
+
+          if (!/^[A-Za-z]:[\\/]/.test(targetPath)) return null
+          if (!/item(ns)? encontrado(s)?/i.test(countLine)) return null
+
+          const itemLines = []
+          let note = ""
+          for (let index = 3; index < lines.length; index += 1) {
+            const line = lines[index]
+            if (/^(Pasta|Arquivo)\s{2,}/.test(line)) {
+              itemLines.push(line)
+              continue
+            }
+            note = line
+          }
+
+          return {
+            title,
+            targetPath,
+            countLine,
+            itemLines,
+            note,
+          }
+        }
+
+        function buildBreadcrumbs(targetPath, chatId, messageIndex) {
+          const normalized = String(targetPath || "").trim()
+          if (!normalized) return ""
+
+          const windowsMatch = normalized.match(/^([A-Za-z]:)(.*)$/u)
+          if (!windowsMatch) {
+            return `<div class="listing-path">${escapeHtml(normalized)}</div>`
+          }
+
+          const drive = windowsMatch[1]
+          const remainder = windowsMatch[2] || ""
+          const parts = remainder.split(/[\\/]+/u).filter(Boolean)
+          const crumbs = []
+
+          let currentPath = drive
+          crumbs.push({ label: drive, path: currentPath })
+
+          for (const part of parts) {
+            currentPath = `${currentPath}\\${part}`
+            crumbs.push({ label: part, path: currentPath })
+          }
+
+          return `
+            <div class="listing-breadcrumbs">
+              ${crumbs.map((crumb, index) => {
+                const isCurrent = index === crumbs.length - 1
+                const encodedPath = encodeURIComponent(crumb.path)
+                const encodedCurrent = encodeURIComponent(normalized)
+                const button = `
+                  <button
+                    class="listing-crumb${isCurrent ? " current" : ""}"
+                    type="button"
+                    onclick="window.triggerListingAction('open','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodedCurrent}')"
+                  >${escapeHtml(crumb.label)}</button>
+                `
+                const sep = index < crumbs.length - 1 ? `<span class="listing-crumb-sep">/</span>` : ""
+                return `${button}${sep}`
+              }).join("")}
+            </div>
+          `
+        }
+
+        const content = String(message.content || "")
+        const blockedRequest = message.role === "agent" ? getBlockedPermissionRequest(message) : null
+        if (blockedRequest) {
+          const toolMeta = getToolUiMeta(blockedRequest.toolName)
+          return `
+            <div class="approval-bubble">
+              <div class="approval-bubble-title">Aguardando sua aprovacao</div>
+              <div class="approval-bubble-copy">
+                O Chocks esta pronto para ${escapeHtml(toolMeta.noun)} e continuar a tarefa.
+                ${toolMeta.destructive ? " Esta e uma acao sensivel." : ""}
+                Use o card de permissao logo abaixo para permitir ou dispensar.
+              </div>
+            </div>
+          `
+        }
+
+        const listing = message.role === "agent" ? parseDirectoryListing(content) : null
+        if (listing) {
+          const chatId = options.chatId || ""
+          const messageIndex = Number.isInteger(options.messageIndex) ? options.messageIndex : -1
+          const normalizedListingPath = listing.targetPath.replace(/[\\\/]+$/u, "")
+          const parentPath = normalizedListingPath.replace(/[\\/][^\\/]+$/u, "")
+          const canGoUp = !!parentPath && parentPath !== normalizedListingPath
+          const items = listing.itemLines
+            .map((line) => {
+              const match = line.match(/^(Pasta|Arquivo)\s{2,}(.+)$/)
+              const kind = match?.[1] || ""
+              const name = match?.[2] || line
+              const fullPath = `${normalizedListingPath}\\${name}`
+              const encodedPath = encodeURIComponent(fullPath)
+              const actions = kind === "Pasta"
+                ? `
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('open','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Abrir</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('duplicate','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Duplicar</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('rename','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Renomear</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('move','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Mover</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('copy','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Copiar caminho</button>
+                `
+                : `
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('read','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Preview</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('edit','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Editar</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('duplicate','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Duplicar</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('rename','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Renomear</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('move','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Mover</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('download','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Baixar</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('delete','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Excluir</button>
+                  <button class="listing-action" type="button" onclick="window.triggerListingAction('copy','${encodedPath}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Copiar caminho</button>
+                `
+              return `
+                <div class="listing-item">
+                  <div class="listing-main">
+                    <span class="listing-kind">${escapeHtml(kind)}</span>
+                    <span class="listing-name">${escapeHtml(name)}</span>
+                  </div>
+                  <div class="listing-actions">${actions}</div>
+                </div>
+              `
+            })
+            .join("")
+
+          return `
+            <div class="listing-card">
+              <div class="listing-head">
+                <div class="listing-head-row">
+                  <div class="listing-title">${escapeHtml(listing.title)}</div>
+                  <div class="listing-head-actions">
+                    ${canGoUp ? `<button class="listing-action" type="button" onclick="window.triggerListingAction('up','${encodeURIComponent(parentPath)}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Subir</button>` : ""}
+                    <button class="listing-action" type="button" onclick="window.triggerListingAction('mkdir','${encodeURIComponent(`${normalizedListingPath}\\Nova pasta`)}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Nova pasta</button>
+                    <button class="listing-action" type="button" onclick="window.triggerListingAction('copy','${encodeURIComponent(listing.targetPath)}','${escapeHtml(chatId)}',${messageIndex},'${encodeURIComponent(normalizedListingPath)}')">Copiar caminho</button>
+                  </div>
+                </div>
+                ${buildBreadcrumbs(listing.targetPath, chatId, messageIndex)}
+              </div>
+              <div class="listing-count">${escapeHtml(listing.countLine)}</div>
+              <div class="listing-items">${items || `<div class="listing-note">Sem itens.</div>`}</div>
+              ${listing.note ? `<div class="listing-note">${escapeHtml(listing.note)}</div>` : ""}
+            </div>
+          `
+        }
+
+        const text = escapeHtml(content)
+        if (message.role !== "user" || !Array.isArray(message.attachments) || message.attachments.length === 0) {
+          return text
+        }
+
+        const attachments = message.attachments
+          .map((attachment) => `<span class="bubble-attachment">${escapeHtml(attachment.name)}</span>`)
+          .join("")
+
+        return `
+          <div>${text || "[arquivo anexado]"}</div>
+          <div class="bubble-attachments">${attachments}</div>
+        `
+      }
+
+      function getLatestActivity(chat) {
+        const messages = Array.isArray(chat?.messages) ? chat.messages : []
+        const lastAgent = [...messages].reverse().find((message) => message?.role === "agent")
+        if (!lastAgent || !lastAgent.streaming) return null
+
+        const trace = Array.isArray(lastAgent.trace) ? lastAgent.trace : []
+        const toolCalls = new Map()
+
+        trace.forEach((entry) => {
+          if (entry?.type === "tool_call") {
+            toolCalls.set(entry.call_id, { name: entry.name, done: false })
+            return
+          }
+          if (entry?.type === "tool_output" && toolCalls.has(entry.call_id)) {
+            toolCalls.get(entry.call_id).done = true
+          }
+        })
+
+        const activeTool = [...toolCalls.values()].reverse().find((tool) => !tool.done)
+        const runningStep = Array.isArray(activeWorkflow?.steps)
+          ? activeWorkflow.steps.find((step) => step.status === "in_progress")
+          : null
+
+        if (activeTool) {
+          const toolMeta = getToolUiMeta(activeTool.name)
+          return {
+            label: "Executando",
+            text: toolMeta.label,
+            meta: runningStep ? `Etapa atual: ${runningStep.text}` : "Chamando ferramenta no sistema",
+          }
+        }
+
+        if (runningStep) {
+          return {
+            label: "Planejando",
+            text: runningStep.text,
+            meta: "Atualizando workflow da conversa",
+          }
+        }
+
+        return {
+          label: "Respondendo",
+          text: "Organizando a resposta",
+          meta: "Finalizando o texto e o resultado",
+        }
+      }
+
+      function renderLiveActivity(chat) {
+        const activity = getLatestActivity(chat)
+        if (!activity) return ""
+        return `
+          <div class="live-activity">
+            <div class="live-activity-label">${escapeHtml(activity.label)}</div>
+            <div class="live-activity-text">${escapeHtml(activity.text)}</div>
+            <div class="live-activity-meta">${escapeHtml(activity.meta)}</div>
+          </div>
+        `
+      }
+
+      function renderMessages(chat) {
+        messagesInnerEl.innerHTML = ""
+
+        chat.messages.forEach((message, messageIndex) => {
+          const wrapper = document.createElement("div")
+          wrapper.className = `message ${message.role}`
+          const role = message.role === "user" ? "VOCE" : "CHOCKS"
+          const badge = message.role === "agent" ? `<div class="message-badge"><img src="/agent-avatar.png" alt="Chocks" /></div>` : ""
+
+          const bubbleHtml = renderBubbleContent(message, { chatId: chat.id, messageIndex })
+          const streamingCaret = message.role === "agent" && message.streaming ? `<span class="streaming-caret">|</span>` : ""
+          const liveActivity = message.role === "agent" && message.streaming ? renderLiveActivity(chat) : ""
+
+          wrapper.innerHTML = `
+            <div class="message-role">${role}</div>
+            <div class="message-row">
+              ${badge}
+              <div class="bubble">${bubbleHtml}${streamingCaret}</div>
+            </div>
+            ${liveActivity}
+            ${message.role === "agent" ? renderTrace(message.trace, { chatId: chat.id }) : ""}
+          `
+
+          messagesInnerEl.appendChild(wrapper)
+        })
+
+        const messagesEl = document.getElementById("messages")
+        messagesEl.scrollTop = messagesEl.scrollHeight
+      }
+
+      function buildApiMessages(chat) {
+        if (!chat || !Array.isArray(chat.messages)) return []
+
+        return chat.messages
+          .filter((message) => {
+            if (!message || (message.role !== "user" && message.role !== "agent")) return false
+            if (message.role === "agent" && message.streaming) return false
+            return true
+          })
+          .map((message) => {
+            let content = String(message.content || "")
+            if (message.role === "user" && Array.isArray(message.attachments) && message.attachments.length > 0) {
+              const attachmentBlock = message.attachments
+                .map((attachment) => `Arquivo anexado: ${attachment.name}`)
+                .join("\n")
+              content = content ? `${content}\n\n${attachmentBlock}` : attachmentBlock
+            }
+
+            return {
+              role: message.role === "agent" ? "assistant" : "user",
+              content,
+            }
+          })
+      }
+
+      function renderApp() {
+        const chat = getActiveChat()
+        if (!chat) return
+
+        const hasMessages = Array.isArray(chat.messages) && chat.messages.length > 0
+        topbarTitleEl.textContent = chat.title || "Nova conversa"
+        shareButtonEl.hidden = !hasMessages
+        if (hasMessages) {
+          welcomeViewEl.hidden = true
+          chatViewEl.hidden = false
+        } else {
+          welcomeViewEl.hidden = false
+          chatViewEl.hidden = true
+        }
+
+        renderSidebarMode()
+        applySettingsToUi()
+
+        if (hasMessages) {
+          renderMessages(chat)
+        }
+      }
+
+      async function shareCurrentChat() {
+        const chat = getActiveChat()
+        if (!chat) return
+        const text = (chat.messages || [])
+          .map((message) => `${message.role.toUpperCase()}:\n${message.content}`)
+          .join("\n\n")
+        try {
+          await navigator.clipboard.writeText(text)
+          showToast("Conversa copiada")
+        } catch {
+          showToast("Nao foi possivel copiar")
+        }
+      }
+
+      function openFilePicker(kind) {
+        if (kind === "welcome") welcomeFileInputEl.click()
+        else chatFileInputEl.click()
+      }
+
+      async function handleFileSelection(event, kind) {
+        const file = event.target.files?.[0]
+        if (!file) return
+        const ext = `.${(file.name.split(".").pop() || "").toLowerCase()}`
+        if (!ALLOWED_ATTACHMENT_EXTENSIONS.includes(ext)) {
+          setAttachmentFeedback(kind, `Tipo nao suportado: ${ext}. Use texto, codigo ou JSON.`, true)
+          event.target.value = ""
+          return
+        }
+        if (file.size > MAX_ATTACHMENT_BYTES) {
+          setAttachmentFeedback(kind, `Arquivo muito grande. Maximo: ${Math.round(MAX_ATTACHMENT_BYTES / 1024)} KB.`, true)
+          event.target.value = ""
+          return
+        }
+        const content = await file.text()
+        const nextAttachment = {
+          name: file.name,
+          content,
+        }
+        if (kind === "welcome") {
+          welcomeAttachments = [...welcomeAttachments, nextAttachment]
+          renderAttachmentList(welcomeAttachmentsEl, welcomeAttachments, "welcome")
+        } else {
+          chatAttachments = [...chatAttachments, nextAttachment]
+          renderAttachmentList(chatAttachmentsEl, chatAttachments, "chat")
+        }
+        setAttachmentFeedback(kind, `${file.name} anexado com sucesso.`)
+        event.target.value = ""
+      }
+
+      async function loadToolStatuses() {
+        try {
+          const localUser = getLocalUser()
+          const settings = loadSettings()
+          const approvedTools = getApprovedToolsForChat()
+          const response = await fetch("/tools/status", {
+            headers: {
+              "x-chocks-user-id": localUser.id,
+              "x-chocks-display-name": localUser.displayName,
+              "x-chocks-full-access": settings.fullAccess ? "true" : "false",
+              "x-chocks-permission-mode": settings.permissionMode,
+              "x-chocks-approved-tools": approvedTools.join(","),
+            },
+          })
+          if (!response.ok) throw new Error("tools status unavailable")
+          const data = await response.json()
+          toolStatuses = Array.isArray(data?.tools) ? data.tools : []
+          if (getWorkspaceMode() === "code") {
+            renderSidebarMode()
+          }
+        } catch {
+          toolStatuses = []
+        }
+      }
+
+      async function loadWorkflowStatus(chatId = getActiveChatId()) {
+        try {
+          const query = chatId ? `?chatId=${encodeURIComponent(chatId)}` : ""
+          const localUser = getLocalUser()
+          const settings = loadSettings()
+          const approvedTools = getApprovedToolsForChat(chatId)
+          const response = await fetch(`/workflow/status${query}`, {
+            headers: {
+              "x-chocks-user-id": localUser.id,
+              "x-chocks-display-name": localUser.displayName,
+              "x-chocks-full-access": settings.fullAccess ? "true" : "false",
+              "x-chocks-permission-mode": settings.permissionMode,
+              "x-chocks-approved-tools": approvedTools.join(","),
+            },
+          })
+          if (!response.ok) throw new Error("workflow status unavailable")
+          const data = await response.json()
+          activeWorkflow = data?.active || null
+        } catch {
+          activeWorkflow = null
+        }
+
+        syncStreamingUi()
+        if (getWorkspaceMode() === "workflow") {
+          renderSidebarMode()
+        }
+      }
+
+      async function consumeChatStream(chatId, messages, signal) {
+        const localUser = getLocalUser()
+        const settings = loadSettings()
+        const approvedTools = getApprovedToolsForChat(chatId)
+        const response = await fetch("/chat/stream", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-chocks-user-id": localUser.id,
+            "x-chocks-display-name": localUser.displayName,
+            "x-chocks-full-access": settings.fullAccess ? "true" : "false",
+            "x-chocks-permission-mode": settings.permissionMode,
+            "x-chocks-approved-tools": approvedTools.join(","),
+          },
+          signal,
+          body: JSON.stringify({
+            chatId,
+            userId: localUser.id,
+            displayName: localUser.displayName,
+            fullAccess: settings.fullAccess,
+            permissionMode: settings.permissionMode,
+            approvedTools,
+            messages,
+          }),
+        })
+
+        if (!response.ok || !response.body) {
+          const errText = await response.text()
+          throw new Error(`${response.status} ${errText}`)
+        }
+
+        const decoder = new TextDecoder()
+        let buffer = ""
+
+        const applyAssistantUpdate = (updater) => {
+          const chats = loadChats()
+          const chat = chats.find((item) => item.id === chatId)
+          if (!chat) return
+          const lastMessage = chat.messages[chat.messages.length - 1]
+          if (!lastMessage || lastMessage.role !== "agent") return
+          updater(lastMessage)
+          saveChats(chats)
+          renderApp()
+        }
+
+        const reader = response.body.getReader()
+        while (true) {
+          const { value, done } = await reader.read()
+          if (done) break
+          buffer += decoder.decode(value, { stream: true })
+
+          while (buffer.includes("\n\n")) {
+            const boundary = buffer.indexOf("\n\n")
+            const rawEvent = buffer.slice(0, boundary)
+            buffer = buffer.slice(boundary + 2)
+
+            const lines = rawEvent.split("\n")
+            const eventLine = lines.find((line) => line.startsWith("event:"))
+            const dataLine = lines.find((line) => line.startsWith("data:"))
+            if (!eventLine || !dataLine) continue
+
+            const eventName = eventLine.slice(6).trim()
+            let payload = {}
+            try {
+              payload = JSON.parse(dataLine.slice(5).trim())
+            } catch {
+              payload = {}
+            }
+
+            if (eventName === "text-delta") {
+              applyAssistantUpdate((message) => {
+                message.content = `${message.content || ""}${payload.delta || ""}`
+                message.streaming = true
+              })
+            }
+
+            if (eventName === "trace") {
+              applyAssistantUpdate((message) => {
+                message.trace = [...(message.trace || []), payload]
+                message.streaming = true
+              })
+              loadWorkflowStatus(chatId)
+            }
+
+            if (eventName === "done") {
+              applyAssistantUpdate((message) => {
+                message.content = message.content || payload.output_text || ""
+                message.trace = payload.trace || message.trace || []
+                message.streaming = false
+              })
+              loadWorkflowStatus(chatId)
+            }
+
+            if (eventName === "error") {
+              throw new Error(payload.error || "stream failed")
+            }
+          }
+        }
+      }
+
+      async function submitMessage(text, kind) {
+        if (isStreaming) {
+          activeStreamAbortController?.abort()
+          return
+        }
+
+        const attachments = kind === "welcome" ? welcomeAttachments : chatAttachments
+        const attachmentBlock = formatAttachmentsForPrompt(attachments)
+        const baseText = String(text || "").trim()
+        const content = attachmentBlock ? `${baseText}\n\n${attachmentBlock}`.trim() : baseText
+        if (!content) return
+
+        let chat = getActiveChat()
+        if (!chat) {
+          chat = createChat()
+          await requestJson("/conversations", {
+            method: "POST",
+            body: JSON.stringify({ id: chat.id, title: chat.title }),
+          })
+        }
+
+        const wasEmpty = chat.messages.length === 0
+        if (wasEmpty) chat.title = makeTitle(content)
+
+        chat.messages.push({
+          role: "user",
+          content: baseText || "[arquivo anexado]",
+          attachments: attachments.map((attachment) => ({ name: attachment.name })),
+        })
+        chat.messages.push({ role: "agent", content: "", trace: [], streaming: true })
+        upsertChat(chat)
+        renderApp()
+        await persistChat(chat)
+        welcomePromptEl.value = ""
+        chatPromptEl.value = ""
+        welcomeAttachments = []
+        chatAttachments = []
+        renderAttachmentList(welcomeAttachmentsEl, welcomeAttachments, "welcome")
+        renderAttachmentList(chatAttachmentsEl, chatAttachments, "chat")
+        setAttachmentFeedback("welcome")
+        setAttachmentFeedback("chat")
+        isStreaming = true
+        activeStreamAbortController = new AbortController()
+        syncStreamingUi()
+        const requestMessages = buildApiMessages(chat)
+
+        try {
+          await consumeChatStream(chat.id, requestMessages, activeStreamAbortController.signal)
+        } catch (error) {
+          chat = getActiveChat() || chat
+          const lastMessage = chat.messages[chat.messages.length - 1]
+          if (lastMessage?.role === "agent") {
+            if (String(error).includes("AbortError")) {
+              lastMessage.content = `${lastMessage.content || ""}\n\n[resposta cancelada]`.trim()
+            } else {
+              lastMessage.content = `Erro: ${String(error)}`
+            }
+            lastMessage.trace = []
+            lastMessage.streaming = false
+          } else {
+            chat.messages.push({ role: "agent", content: `Erro: ${String(error)}`, trace: [], streaming: false })
+          }
+          upsertChat(chat)
+          await persistChat(chat)
+          renderApp()
+        } finally {
+          isStreaming = false
+          activeStreamAbortController = null
+          const latestChat = getActiveChat()
+          const latestMessage = latestChat?.messages?.[latestChat.messages.length - 1]
+          if (latestMessage?.role === "agent") {
+            latestMessage.streaming = false
+            upsertChat(latestChat)
+            await persistChat(latestChat)
+          }
+          syncStreamingUi()
+          loadWorkflowStatus(chat.id)
+          renderApp()
+        }
+      }
+
+      function handlePromptKeydown(event, textarea) {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault()
+          submitMessage(textarea.value, textarea === welcomePromptEl ? "welcome" : "chat")
+        }
+      }
+
+      welcomeSendEl.addEventListener("click", () => submitMessage(welcomePromptEl.value, "welcome"))
+      chatSendEl.addEventListener("click", () => submitMessage(chatPromptEl.value, "chat"))
+      fullAccessToggleEl.addEventListener("click", () => toggleFullAccess())
+
+      welcomePromptEl.addEventListener("keydown", (event) => handlePromptKeydown(event, welcomePromptEl))
+      chatPromptEl.addEventListener("keydown", (event) => handlePromptKeydown(event, chatPromptEl))
+
+      newChatButtonEl.addEventListener("click", async () => {
+        try {
+          const nextChat = createChat()
+          await requestJson("/conversations", {
+            method: "POST",
+            body: JSON.stringify({ id: nextChat.id, title: nextChat.title }),
+          })
+          welcomePromptEl.value = ""
+          chatPromptEl.value = ""
+          setWorkspaceMode("conversations")
+          await loadWorkflowStatus(nextChat.id)
+          renderApp()
+        } catch (error) {
+          showToast(`Erro: ${String(error)}`)
+        }
+      })
+
+      shareButtonEl.addEventListener("click", () => {
+        shareCurrentChat()
+      })
+
+      profileButtonEl.addEventListener("click", () => {
+        openSettingsOverlay()
+      })
+
+      profileIconButtonEl.addEventListener("click", () => {
+        openSettingsOverlay()
+      })
+
+      toggleSidebarButtonEl.addEventListener("click", () => {
+        setSidebarCollapsed(!isSidebarCollapsed())
+        applySidebarState()
+      })
+
+      welcomeAttachEl.addEventListener("click", () => {
+        openFilePicker("welcome")
+      })
+
+      chatAttachEl.addEventListener("click", () => {
+        openFilePicker("chat")
+      })
+
+      welcomeFileInputEl.addEventListener("change", (event) => {
+        handleFileSelection(event, "welcome")
+      })
+
+      chatFileInputEl.addEventListener("change", (event) => {
+        handleFileSelection(event, "chat")
+      })
+
+      searchButtonEl.addEventListener("click", () => {
+        if (searchOpen) closeSearch(true)
+        else openSearch()
+        renderApp()
+        if (searchOpen) searchInputEl.focus()
+      })
+
+      searchInputEl.addEventListener("input", () => {
+        searchQuery = searchInputEl.value.trim()
+        renderRecentList()
+      })
+
+      settingsCancelEl.addEventListener("click", () => {
+        settingsOverlayEl.hidden = true
+        syncNavButtons()
+      })
+
+      settingsSaveEl.addEventListener("click", async () => {
+        saveSettings({
+          displayName: settingsDisplayNameEl.value.trim() || "bsilv",
+          welcomeTitle: settingsWelcomeTitleEl.value.trim() || "Bem-vindo ao Chocks",
+          planLabel: settingsPlanLabelEl.value.trim() || "Plano local",
+          permissionMode: settingsPermissionModeEl.value || "ask",
+          fullAccess: !!settingsFullAccessEl.checked,
+        })
+        syncLocalUserDisplayName()
+        settingsOverlayEl.hidden = true
+        syncNavButtons()
+        await loadToolStatuses()
+        renderApp()
+      })
+
+      settingsOverlayEl.addEventListener("click", (event) => {
+        if (event.target === settingsOverlayEl) {
+          settingsOverlayEl.hidden = true
+          syncNavButtons()
+        }
+      })
+
+      // Rename Modal Handlers
+      let renameCallback = null
+
+      function openRenameModal(currentPath, callback) {
+        renameCallback = callback
+        renameCurrentEl.value = currentPath
+        renameNewEl.value = ""
+        renameOverlayEl.hidden = false
+        renameNewEl.focus()
+      }
+
+      renameCancelEl.addEventListener("click", () => {
+        renameOverlayEl.hidden = true
+        renameCallback = null
+        renameNewEl.value = ""
+      })
+
+      renameConfirmEl.addEventListener("click", () => {
+        const newPath = renameNewEl.value.trim()
+        if (newPath && renameCallback) {
+          renameCallback(newPath)
+        }
+        renameOverlayEl.hidden = true
+        renameCallback = null
+        renameNewEl.value = ""
+      })
+
+      renameNewEl.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          renameConfirmEl.click()
+        } else if (event.key === "Escape") {
+          renameCancelEl.click()
+        }
+      })
+
+      renameOverlayEl.addEventListener("click", (event) => {
+        if (event.target === renameOverlayEl) {
+          renameCancelEl.click()
+        }
+      })
+
+      document.addEventListener("click", (event) => {
+        const target = event.target
+        if (!(target instanceof Element)) return
+        if (target.closest(".recent-item")) return
+        if (openMenuChatId !== null) {
+          openMenuChatId = null
+          renderRecentList()
+        }
+      })
+
+      workspaceButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          closeSearch(false)
+          openMenuChatId = null
+          setWorkspaceMode(button.dataset.workspace)
+          renderApp()
+        })
+      })
+
+      suggestionChipEls.forEach((button) => {
+        button.addEventListener("click", () => {
+          applySuggestionPrompt(button.getAttribute("data-suggestion") || "")
+        })
+      })
+
+      async function initApp() {
+        syncLocalUserDisplayName()
+        applySettingsToUi()
+        applySidebarState()
+        syncStreamingUi()
+        fileBrowserState = loadFileBrowserState()
+        filePreviewState = loadFilePreviewState()
+
+        try {
+          const chats = await migrateLegacyChatsIfNeeded()
+          if (chats.length === 0) {
+            const firstChat = createChat()
+            await requestJson("/conversations", {
+              method: "POST",
+              body: JSON.stringify({ id: firstChat.id, title: firstChat.title }),
+            })
+            await refreshChatsFromServer()
+          }
+
+          renderApp()
+          await Promise.all([loadToolStatuses(), loadWorkflowStatus()])
+          renderApp()
+        } catch (error) {
+          console.error(error)
+          showToast("Nao foi possivel carregar as conversas do servidor")
+          if (loadChats().length === 0) {
+            createChat()
+          }
+          renderApp()
+        }
+      }
+
+      initApp()
+    </script>
+  </body>
+</html>
