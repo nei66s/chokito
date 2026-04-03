@@ -59,6 +59,13 @@ app.use(express.json())
 app.use(express.static(path.resolve(__dirname, '..', 'public')))
 
 // === Coordinator Instance ===
+// Controlled by CHOKITO_COORDINATOR_MODE env var (any truthy value enables it).
+// Default: disabled. Set CHOKITO_COORDINATOR_MODE=true in .env to enable.
+function isCoordinatorMode(): boolean {
+  const raw = String(process.env.CHOKITO_COORDINATOR_MODE || '').trim().toLowerCase()
+  return raw === 'true' || raw === '1' || raw === 'yes' || raw === 'on'
+}
+
 const coordinator = new Coordinator({
   maxWorkers: 6,
   taskDecompositionTokenLimit: 2000,
@@ -1004,8 +1011,21 @@ app.get('/api/costs', async (req: Request, res: Response) => {
 
 // ===== Fase 6: Coordinator Mode Endpoints =====
 
+// GET /api/coordinator/mode - Check if coordinator mode is active
+app.get('/api/coordinator/mode', (_req: Request, res: Response) => {
+  res.json({
+    enabled: isCoordinatorMode(),
+    hint: isCoordinatorMode()
+      ? 'Coordinator mode is active. Use /api/coordinator/orchestrate to dispatch tasks.'
+      : 'Coordinator mode is disabled. Set CHOKITO_COORDINATOR_MODE=true in .env to enable.',
+  })
+})
+
 // POST /api/coordinator/orchestrate - Decompose and orchestrate complex task
 app.post('/api/coordinator/orchestrate', async (req: Request, res: Response) => {
+  if (!isCoordinatorMode()) {
+    return res.status(503).json({ error: 'Coordinator mode is disabled. Set CHOKITO_COORDINATOR_MODE=true to enable.' })
+  }
   try {
     const { userMessage, chatId } = req.body
     if (!userMessage) {
@@ -1071,6 +1091,9 @@ app.post('/api/coordinator/orchestrate', async (req: Request, res: Response) => 
 
 // GET /api/coordinator/stats - Get coordinator statistics
 app.get('/api/coordinator/stats', (_req: Request, res: Response) => {
+  if (!isCoordinatorMode()) {
+    return res.status(503).json({ error: 'Coordinator mode is disabled.' })
+  }
   try {
     const coordinatorStats = coordinator.getCoordinatorStats()
     const workerPool = coordinator['workerPool']
@@ -1091,6 +1114,9 @@ app.get('/api/coordinator/stats', (_req: Request, res: Response) => {
 // GET /api/coordinator/workers - List all workers and their status
   // (supports fallback chains with retry logic)
 app.get('/api/coordinator/workers', (_req: Request, res: Response) => {
+  if (!isCoordinatorMode()) {
+    return res.status(503).json({ error: 'Coordinator mode is disabled.' })
+  }
   try {
     const workerPool = coordinator['workerPool']
     const workers = workerPool.getAllWorkers()

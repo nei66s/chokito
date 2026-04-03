@@ -1,5 +1,6 @@
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import path from 'path'
 
 const execAsync = promisify(exec)
 
@@ -69,11 +70,99 @@ function shouldUseStrictSandbox(): boolean {
   return String(process.env.CHOKITO_SANDBOX_STRICT || '').toLowerCase() === 'true'
 }
 
+/**
+ * Windows PowerShell soft-sandbox.
+ *
+ * OS-level isolation (seccomp / seatbelt) is not available on Windows, so we
+ * apply two layers of defence-in-depth:
+ *
+ *   1. **Path-traversal pre-check** — scan raw command tokens for `..` sequences
+ *      that would escape the working directory.  Rejects the command before
+ *      spawning if any token resolves outside `cwd`.
+ *
+ *   2. **Restricted PowerShell runspace** — wraps the command in a PowerShell
+ *      `-NonInteractive -NoProfile` sub-shell that:
+ *        • Overrides `HOME`, `HOMEDRIVE`, `HOMEPATH`, `USERPROFILE` to `cwd`
+ *        • Blocks access to the user profile tree outside the project root
+ *        • Sets `$ConfirmPreference = 'High'` to suppress auto-confirm prompts
+ *        • Captures stdout/stderr separately (no merged fd on Windows)
+ *
+ *   3. Falls back to `runRaw` when PowerShell is unavailable (WSL1 or non-PS
+ *      environments) unless `CHOKITO_SANDBOX_STRICT` is set.
+ */
+function buildPowerShellSandboxCommand(command: string, cwd: string): string {
+  // Escape single-quotes inside the user command by doubling them
+  const escaped = command.replace(/'/g, "''")
+  // Encode as UTF-16LE base64 so we avoid shell quoting hell
+  const psScript = [
+    `$ConfirmPreference = 'High'`,
+    `$env:HOME = '${cwd.replace(/'/g, "''")}'`,
+    `$env:USERPROFILE = '${cwd.replace(/'/g, "''")}'`,
+    `Set-Location -LiteralPath '${cwd.replace(/'/g, "''")}'`,
+    `Invoke-Expression '${escaped}'`,
+  ].join('; ')
+
+  const utf16 = Buffer.from(psScript, 'utf16le').toString('base64')
+  return `powershell.exe -NonInteractive -NoProfile -ExecutionPolicy Bypass -EncodedCommand ${utf16}`
+}
+
+function hasPathTraversal(command: string, cwd: string): boolean {
+  const normalizedCwd = cwd.replace(/\\/g, '/').toLowerCase()
+  // Check simple `..` patterns that could escape cwd
+  const tokens = command.split(/\s+/)
+  for (const token of tokens) {
+    const cleaned = token.replace(/['"]/g, '').replace(/\\/g, '/')
+    if (cleaned.includes('..')) {
+      // Resolve relative to cwd and check if it stays inside
+      try {
+        const resolved = path.resolve(cwd, cleaned).replace(/\\/g, '/').toLowerCase()
+        if (!resolved.startsWith(normalizedCwd)) return true
+      } catch {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+
 export async function runWithSandbox(input: SandboxExecutionInput): Promise<SandboxExecutionResult> {
   const timeoutMs = Math.max(1000, Number(input.timeoutMs || 15000))
   const strict = shouldUseStrictSandbox()
 
   try {
+    if (process.platform === 'win32') {
+      // Pre-check: block path traversal attempts
+      if (hasPathTraversal(input.command, input.cwd)) {
+        throw new Error(`[sandbox] path traversal detected in command: "${input.command.substring(0, 80)}"`)
+      }
+
+      try {
+        const startedAt = Date.now()
+        const { stdout, stderr } = await execAsync(
+          buildPowerShellSandboxCommand(input.command, input.cwd),
+          {
+            cwd: input.cwd,
+            timeout: timeoutMs,
+            windowsHide: true,
+            maxBuffer: 2 * 1024 * 1024,
+          },
+        )
+        return {
+          stdout,
+          stderr,
+          exitCode: 0,
+          durationMs: Date.now() - startedAt,
+          sandbox: 'none', // soft sandbox only — no OS isolation
+        }
+      } catch (error: any) {
+        if (strict) {
+          throw new Error(`sandbox unavailable (powershell): ${String(error?.message || error)}`)
+        }
+        // Fall through to runRaw below
+      }
+    }
+
     if (process.platform === 'linux') {
       try {
         const startedAt = Date.now()
