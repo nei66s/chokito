@@ -2591,6 +2591,19 @@
             </span>
             <span>Swarm</span>
           </button>
+          <button class="workspace-item" data-workspace="coordinator" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="5" cy="18" r="1.8"></circle>
+                <circle cx="19" cy="18" r="1.8"></circle>
+                <path d="M12 7v6"></path>
+                <path d="M12 13l-7 5"></path>
+                <path d="M12 13l7 5"></path>
+              </svg>
+            </span>
+            <span>Coordinator</span>
+          </button>
           <button class="workspace-item" data-workspace="plugins" type="button">
             <span class="workspace-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2726,6 +2739,9 @@
           <div class="view panel-view" id="swarm-view" hidden>
             <div class="panel-view-inner" id="swarm-view-inner"></div>
           </div>
+          <div class="view panel-view" id="coordinator-view" hidden>
+            <div class="panel-view-inner" id="coordinator-view-inner"></div>
+          </div>
           <div class="view panel-view" id="plugins-view" hidden>
             <div class="panel-view-inner" id="plugins-view-inner"></div>
           </div>
@@ -2818,6 +2834,8 @@
       const familyMapEl = document.getElementById("family-map")
       const swarmViewEl = document.getElementById("swarm-view")
       const swarmViewInnerEl = document.getElementById("swarm-view-inner")
+      const coordinatorViewEl = document.getElementById("coordinator-view")
+      const coordinatorViewInnerEl = document.getElementById("coordinator-view-inner")
       const pluginsViewEl = document.getElementById("plugins-view")
       const pluginsViewInnerEl = document.getElementById("plugins-view-inner")
       const monitorViewEl = document.getElementById("monitor-view")
@@ -5032,19 +5050,65 @@
           const teamsHtml = teamList.length === 0
             ? `<div class="sidebar-empty">Nenhum time criado ainda.</div>`
             : teamList.map((team) => {
-                const agents = Array.isArray(team.agents) ? team.agents : []
-                const agentsHtml = agents.map((a) => `<span class="panel-chip">${escapeHtml(String(a.name || a))}</span>`).join("")
+                const teamName = String(team.name || team.teamName || "Time")
+                const teamKey = encodeURIComponent(teamName).replace(/%/g, "_")
+                const members = Array.isArray(team.members) ? team.members : []
+                const memberNames = members.map((m) => String(m.name || m.agentId || "")).filter(Boolean)
+                const membersHtml = memberNames.map((name) => `<span class="panel-chip">${escapeHtml(name)}</span>`).join("")
+                const toOptions = memberNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("")
                 return `
                   <div class="swarm-team-card">
-                    <div class="swarm-team-name">${escapeHtml(team.name || team.teamName || "Time")}</div>
-                    <div class="swarm-team-meta">${agents.length} agente(s)</div>
-                    ${agentsHtml ? `<div class="panel-chip-row">${agentsHtml}</div>` : ""}
+                    <div class="swarm-team-name">${escapeHtml(teamName)}</div>
+                    <div class="swarm-team-meta">${members.length} membro(s)</div>
+                    ${membersHtml ? `<div class="panel-chip-row">${membersHtml}</div>` : ""}
                     <div class="swarm-msg-area">
-                      <textarea placeholder="Mensagem para este time..." id="swarm-msg-${escapeHtml(team.name || team.teamName)}"></textarea>
+                      <textarea placeholder="Mensagem para um membro do time..." id="swarm-msg-${teamKey}"></textarea>
+                    </div>
+                    <div class="swarm-create-row" style="margin-bottom: 8px;">
+                      <select id="swarm-to-${teamKey}">
+                        ${toOptions || `<option value="">Sem membros</option>`}
+                      </select>
                     </div>
                     <div class="swarm-team-actions">
-                      <button class="listing-action" type="button" data-swarm-send="${escapeHtml(team.name || team.teamName)}">Enviar</button>
-                      <button class="listing-action" type="button" data-swarm-shutdown="${escapeHtml(team.name || team.teamName)}">Encerrar</button>
+                      <button class="listing-action" type="button" data-swarm-send="${escapeHtml(teamName)}" data-team-key="${teamKey}">Enviar</button>
+                      <button class="listing-action" type="button" data-swarm-shutdown="${escapeHtml(teamName)}">Encerrar</button>
+                    </div>
+                    <div class="panel-card" style="margin-top: 10px;">
+                      <div class="panel-card-title">Spawn teammate</div>
+                      <div class="swarm-create-row" style="margin-bottom: 8px;">
+                        <input type="text" id="swarm-spawn-name-${teamKey}" placeholder="Nome do agente" />
+                        <select id="swarm-spawn-backend-${teamKey}">
+                          <option value="in_process">in_process</option>
+                          <option value="tmux">tmux</option>
+                          <option value="iterm2">iterm2</option>
+                        </select>
+                      </div>
+                      <div class="swarm-create-row" style="margin-bottom: 8px;">
+                        <input type="text" id="swarm-spawn-cwd-${teamKey}" value="." placeholder="CWD" />
+                      </div>
+                      <div class="swarm-msg-area">
+                        <textarea id="swarm-spawn-prompt-${teamKey}" placeholder="Prompt inicial do teammate"></textarea>
+                      </div>
+                      <div class="swarm-team-actions">
+                        <button class="listing-action" type="button" data-swarm-spawn="${escapeHtml(teamName)}" data-team-key="${teamKey}">Spawn</button>
+                      </div>
+                    </div>
+                    <div class="panel-card" style="margin-top: 10px;">
+                      <div class="panel-card-title">Mailbox</div>
+                      <div class="swarm-create-row" style="margin-bottom: 8px;">
+                        <select id="swarm-mailbox-agent-${teamKey}">
+                          ${toOptions || `<option value="">Sem membros</option>`}
+                        </select>
+                        <button class="listing-action" type="button" data-swarm-mailbox="${escapeHtml(teamName)}" data-team-key="${teamKey}">Ler</button>
+                      </div>
+                      <div id="swarm-mailbox-output-${teamKey}" class="panel-card-copy">Sem leitura recente.</div>
+                    </div>
+                    <div class="panel-card" style="margin-top: 10px;">
+                      <div class="panel-card-title">Plan approvals</div>
+                      <div class="swarm-team-actions">
+                        <button class="listing-action" type="button" data-swarm-plans="${escapeHtml(teamName)}" data-team-key="${teamKey}">Atualizar pendentes</button>
+                      </div>
+                      <div id="swarm-plans-output-${teamKey}" class="panel-card-copy">Sem dados.</div>
                     </div>
                   </div>
                 `
@@ -5075,7 +5139,7 @@
             await fetch("/api/swarm/teams", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ teamName }),
+              body: JSON.stringify({ name: teamName }),
             })
             showToast(`Time "${teamName}" criado`)
             renderSwarmPanel()
@@ -5087,18 +5151,174 @@
         panelEl.querySelectorAll("[data-swarm-send]").forEach((button) => {
           button.addEventListener("click", async () => {
             const teamName = button.getAttribute("data-swarm-send")
-            const textarea = panelEl.querySelector(`#swarm-msg-${teamName}`)
+            const teamKey = button.getAttribute("data-team-key")
+            const textarea = panelEl.querySelector(`#swarm-msg-${teamKey}`)
+            const toEl = panelEl.querySelector(`#swarm-to-${teamKey}`)
             const msg = textarea instanceof HTMLTextAreaElement ? textarea.value.trim() : ""
+            const to = toEl instanceof HTMLSelectElement ? toEl.value.trim() : ""
             if (!msg) { showToast("Escreva uma mensagem"); return }
+            if (!to) { showToast("Selecione o destinatario"); return }
             try {
               await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/send-message`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ from: "coordinator", content: msg }),
+                body: JSON.stringify({ from: "leader", to, content: msg }),
               })
               if (textarea instanceof HTMLTextAreaElement) textarea.value = ""
               showToast("Mensagem enviada")
             } catch { showToast("Erro ao enviar") }
+          })
+        })
+
+        panelEl.querySelectorAll("[data-swarm-spawn]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const teamName = button.getAttribute("data-swarm-spawn")
+            const teamKey = button.getAttribute("data-team-key")
+            const nameEl = panelEl.querySelector(`#swarm-spawn-name-${teamKey}`)
+            const backendEl = panelEl.querySelector(`#swarm-spawn-backend-${teamKey}`)
+            const cwdEl = panelEl.querySelector(`#swarm-spawn-cwd-${teamKey}`)
+            const promptEl = panelEl.querySelector(`#swarm-spawn-prompt-${teamKey}`)
+
+            const name = nameEl instanceof HTMLInputElement ? nameEl.value.trim() : ""
+            const backendType = backendEl instanceof HTMLSelectElement ? backendEl.value : "in_process"
+            const cwd = cwdEl instanceof HTMLInputElement ? cwdEl.value.trim() : "."
+            const initialPrompt = promptEl instanceof HTMLTextAreaElement ? promptEl.value.trim() : ""
+
+            if (!name || !cwd || !initialPrompt) {
+              showToast("Spawn exige nome, cwd e prompt inicial")
+              return
+            }
+
+            try {
+              const response = await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/spawn`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, cwd, initialPrompt, backendType }),
+              })
+              const payload = await response.json().catch(() => ({}))
+              if (!response.ok) throw new Error(payload?.error || "spawn falhou")
+              showToast(`Teammate ${name} criado`)
+              renderSwarmPanel()
+            } catch (error) {
+              showToast(`Erro no spawn: ${String(error)}`)
+            }
+          })
+        })
+
+        panelEl.querySelectorAll("[data-swarm-mailbox]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const teamName = button.getAttribute("data-swarm-mailbox")
+            const teamKey = button.getAttribute("data-team-key")
+            const agentEl = panelEl.querySelector(`#swarm-mailbox-agent-${teamKey}`)
+            const outputEl = panelEl.querySelector(`#swarm-mailbox-output-${teamKey}`)
+            const agentName = agentEl instanceof HTMLSelectElement ? agentEl.value.trim() : ""
+
+            if (!agentName) {
+              showToast("Selecione um agente")
+              return
+            }
+
+            try {
+              const response = await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/mailbox/${encodeURIComponent(agentName)}`)
+              const payload = await response.json().catch(() => ({}))
+              if (!response.ok) throw new Error(payload?.error || "mailbox falhou")
+              const messages = Array.isArray(payload?.messages) ? payload.messages : []
+              if (outputEl) {
+                outputEl.innerHTML = messages.length === 0
+                  ? "Sem mensagens pendentes."
+                  : messages
+                      .slice(0, 8)
+                      .map((m) => {
+                        const from = escapeHtml(String(m.from || m.sender || "?"))
+                        const content = escapeHtml(String(m.content || ""))
+                        return `<div style=\"margin-bottom:6px\"><strong>${from}:</strong> ${content}</div>`
+                      })
+                      .join("")
+              }
+              showToast("Mailbox carregada")
+            } catch (error) {
+              showToast(`Erro ao ler mailbox: ${String(error)}`)
+            }
+          })
+        })
+
+        panelEl.querySelectorAll("[data-swarm-plans]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const teamName = button.getAttribute("data-swarm-plans")
+            const teamKey = button.getAttribute("data-team-key")
+            const outputEl = panelEl.querySelector(`#swarm-plans-output-${teamKey}`)
+
+            try {
+              const response = await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/plans/pending`)
+              const payload = await response.json().catch(() => ({}))
+              if (!response.ok) throw new Error(payload?.error || "plans falhou")
+              const plans = Array.isArray(payload?.plans) ? payload.plans : []
+
+              if (outputEl) {
+                outputEl.innerHTML = plans.length === 0
+                  ? "Nenhum plano pendente."
+                  : plans
+                      .map((plan) => {
+                        const workerName = escapeHtml(String(plan.workerName || ""))
+                        const planId = escapeHtml(String(plan.planId || ""))
+                        const title = escapeHtml(String(plan.title || "Plano"))
+                        const stepCount = escapeHtml(String(plan.stepCount || 0))
+                        return `
+                          <div style=\"margin-bottom:10px;padding:8px;border:1px solid var(--line-soft);border-radius:8px;\">
+                            <div><strong>${title}</strong> (${stepCount} etapas)</div>
+                            <div style=\"color:var(--muted);font-size:12px;\">${workerName}</div>
+                            <div style=\"margin-top:6px;display:flex;gap:6px;\">
+                              <button class=\"listing-action\" type=\"button\" data-plan-approve=\"${planId}\" data-plan-worker=\"${workerName}\" data-team-name=\"${escapeHtml(teamName)}\">Aprovar</button>
+                              <button class=\"listing-action\" type=\"button\" data-plan-reject=\"${planId}\" data-plan-worker=\"${workerName}\" data-team-name=\"${escapeHtml(teamName)}\">Rejeitar</button>
+                            </div>
+                          </div>
+                        `
+                      })
+                      .join("")
+              }
+
+              panelEl.querySelectorAll("[data-plan-approve]").forEach((approveButton) => {
+                approveButton.addEventListener("click", async () => {
+                  const planId = approveButton.getAttribute("data-plan-approve")
+                  const workerName = approveButton.getAttribute("data-plan-worker")
+                  const team = approveButton.getAttribute("data-team-name")
+                  try {
+                    await fetch(`/api/swarm/teams/${encodeURIComponent(team)}/plans/approve`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ workerName, planId, feedback: "Approved via UI" }),
+                    })
+                    showToast("Plano aprovado")
+                    renderSwarmPanel()
+                  } catch {
+                    showToast("Erro ao aprovar plano")
+                  }
+                })
+              })
+
+              panelEl.querySelectorAll("[data-plan-reject]").forEach((rejectButton) => {
+                rejectButton.addEventListener("click", async () => {
+                  const planId = rejectButton.getAttribute("data-plan-reject")
+                  const workerName = rejectButton.getAttribute("data-plan-worker")
+                  const team = rejectButton.getAttribute("data-team-name")
+                  const feedback = window.prompt("Feedback para rejeicao:", "Please revise and resend") || "Needs revision"
+                  try {
+                    await fetch(`/api/swarm/teams/${encodeURIComponent(team)}/plans/reject`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ workerName, planId, feedback }),
+                    })
+                    showToast("Plano rejeitado")
+                    renderSwarmPanel()
+                  } catch {
+                    showToast("Erro ao rejeitar plano")
+                  }
+                })
+              })
+            } catch (error) {
+              if (outputEl) outputEl.textContent = `Erro: ${String(error)}`
+              showToast("Erro ao carregar planos")
+            }
           })
         })
 
@@ -5118,6 +5338,162 @@
       }
 
       // ── Plugins Panel ─────────────────────────────────────────────────────────
+      async function renderCoordinatorPanel() {
+        const panelEl = coordinatorViewInnerEl
+        if (!panelEl) return
+        panelEl.innerHTML = `<div class="panel-view-title">Coordinator</div><div class="sidebar-empty">Carregando status...</div>`
+
+        let modeData = null
+        let statsData = null
+        let workersData = null
+        try {
+          modeData = await fetch("/api/coordinator/mode").then((r) => r.json())
+          if (modeData?.enabled) {
+            const [statsRes, workersRes] = await Promise.all([
+              fetch("/api/coordinator/stats").then((r) => r.json()).catch(() => null),
+              fetch("/api/coordinator/workers").then((r) => r.json()).catch(() => null),
+            ])
+            statsData = statsRes
+            workersData = workersRes
+          }
+        } catch {
+          panelEl.innerHTML = `<div class="sidebar-empty">Erro ao carregar coordinator.</div>`
+          return
+        }
+
+        const enabled = !!modeData?.enabled
+        const workers = Array.isArray(workersData?.workers) ? workersData.workers : []
+        const workersHtml = workers.length === 0
+          ? `<div class="sidebar-empty">Nenhum worker disponivel.</div>`
+          : workers.map((worker) => {
+              const skills = Array.isArray(worker.skillset) ? worker.skillset.join(", ") : ""
+              return `
+                <div class="panel-card" style="margin-bottom:8px;">
+                  <div class="panel-card-title">${escapeHtml(String(worker.name || worker.id || "worker"))}</div>
+                  <div class="panel-card-copy">Especialidade: ${escapeHtml(String(worker.specialty || "n/a"))}</div>
+                  <div class="panel-card-copy">Disponivel: ${worker.isAvailable ? "sim" : "nao"}</div>
+                  ${skills ? `<div class="panel-card-copy">Skills: ${escapeHtml(skills)}</div>` : ""}
+                </div>
+              `
+            }).join("")
+
+        panelEl.innerHTML = `
+          <div class="panel-card">
+            <div class="panel-card-title">Modo coordinator</div>
+            <div class="panel-card-copy">${enabled ? "Ativo" : "Desativado"}</div>
+            <div class="panel-card-copy">${escapeHtml(String(modeData?.hint || ""))}</div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-title">Orquestrar tarefa</div>
+            <div class="swarm-msg-area">
+              <textarea id="coordinator-message" placeholder="Descreva a tarefa para decomposicao..." ${enabled ? "" : "disabled"}></textarea>
+            </div>
+            <div class="swarm-create-row" style="margin-top:8px;">
+              <input id="coordinator-conversation-id" type="text" placeholder="conversationId (opcional)" ${enabled ? "" : "disabled"} />
+              <button class="listing-action" type="button" id="coordinator-run-btn" ${enabled ? "" : "disabled"}>Orquestrar</button>
+            </div>
+            <div id="coordinator-result" class="panel-card-copy">Nenhuma execucao ainda.</div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-title">Estatisticas</div>
+            <div class="panel-card-copy">${escapeHtml(JSON.stringify(statsData?.coordinator || {}))}</div>
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-title">Workers</div>
+            ${workersHtml}
+          </div>
+
+          <div class="panel-card">
+            <div class="panel-card-title">Historico por conversa</div>
+            <div class="swarm-create-row">
+              <input id="coordinator-history-conversation" type="text" placeholder="conversationId" ${enabled ? "" : "disabled"} />
+              <button class="listing-action" type="button" id="coordinator-history-btn" ${enabled ? "" : "disabled"}>Carregar</button>
+            </div>
+            <div id="coordinator-history-output" class="panel-card-copy">Sem dados.</div>
+          </div>
+        `
+
+        panelEl.querySelector("#coordinator-run-btn")?.addEventListener("click", async () => {
+          const messageEl = panelEl.querySelector("#coordinator-message")
+          const conversationEl = panelEl.querySelector("#coordinator-conversation-id")
+          const resultEl = panelEl.querySelector("#coordinator-result")
+          const userMessage = messageEl instanceof HTMLTextAreaElement ? messageEl.value.trim() : ""
+          const chatId = conversationEl instanceof HTMLInputElement ? conversationEl.value.trim() : ""
+          if (!userMessage) {
+            showToast("Informe a tarefa")
+            return
+          }
+          try {
+            const response = await fetch("/api/coordinator/orchestrate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userMessage, chatId: chatId || undefined }),
+            })
+            const payload = await response.json().catch(() => ({}))
+            if (!response.ok) throw new Error(payload?.error || "falha ao orquestrar")
+
+            if (resultEl) {
+              resultEl.innerHTML = `
+                <div><strong>conversationId:</strong> ${escapeHtml(String(payload.conversationId || ""))}</div>
+                <div style="margin-top:6px;"><strong>Synthesis:</strong> ${escapeHtml(String(payload.synthesis || ""))}</div>
+              `
+            }
+            if (conversationEl instanceof HTMLInputElement && payload?.conversationId) {
+              conversationEl.value = String(payload.conversationId)
+            }
+            showToast("Coordinator executado")
+          } catch (error) {
+            if (resultEl) resultEl.textContent = `Erro: ${String(error)}`
+            showToast("Erro no coordinator")
+          }
+        })
+
+        panelEl.querySelector("#coordinator-history-btn")?.addEventListener("click", async () => {
+          const conversationEl = panelEl.querySelector("#coordinator-history-conversation")
+          const outputEl = panelEl.querySelector("#coordinator-history-output")
+          const conversationId = conversationEl instanceof HTMLInputElement ? conversationEl.value.trim() : ""
+          if (!conversationId) {
+            showToast("Informe conversationId")
+            return
+          }
+          try {
+            const tasksResp = await fetch(`/api/coordinator/tasks/${encodeURIComponent(conversationId)}`)
+            const tasksPayload = await tasksResp.json().catch(() => ({}))
+            if (!tasksResp.ok) throw new Error(tasksPayload?.error || "falha ao carregar tasks")
+            const tasks = Array.isArray(tasksPayload?.tasks) ? tasksPayload.tasks : []
+            if (tasks.length === 0) {
+              if (outputEl) outputEl.textContent = "Sem tasks para esta conversa."
+              return
+            }
+
+            const items = await Promise.all(
+              tasks.slice(0, 8).map(async (task) => {
+                const taskId = String(task.id || task.task_id || "")
+                const subResp = await fetch(`/api/coordinator/tasks/${encodeURIComponent(conversationId)}/${encodeURIComponent(taskId)}`)
+                const subPayload = await subResp.json().catch(() => ({}))
+                const subtasks = Array.isArray(subPayload?.subtasks) ? subPayload.subtasks : []
+                return `
+                  <div style="margin-bottom:8px;padding:8px;border:1px solid var(--line-soft);border-radius:8px;">
+                    <div><strong>${escapeHtml(taskId || "task")}</strong></div>
+                    <div style="color:var(--muted);font-size:12px;">${escapeHtml(String(task.status || ""))}</div>
+                    <div style="font-size:12px;">Subtasks: ${subtasks.length}</div>
+                  </div>
+                `
+              }),
+            )
+            if (outputEl) outputEl.innerHTML = items.join("")
+          } catch (error) {
+            if (outputEl) outputEl.textContent = `Erro: ${String(error)}`
+            showToast("Erro ao carregar historico")
+          }
+        })
+
+        syncNavButtons()
+      }
+
       async function renderPluginsPanel() {
         const panelEl = pluginsViewInnerEl
         if (!panelEl) return
@@ -5499,6 +5875,11 @@
         }
 
         if (mode === "swarm") {
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "coordinator") {
           syncNavButtons()
           return
         }
@@ -6057,6 +6438,7 @@
         chatViewEl.hidden = true
         familyViewEl.hidden = true
         swarmViewEl.hidden = true
+        coordinatorViewEl.hidden = true
         pluginsViewEl.hidden = true
         monitorViewEl.hidden = true
         auditViewEl.hidden = true
@@ -6083,6 +6465,17 @@
           renderSidebarMode()
           applySettingsToUi()
           renderSwarmPanel()
+          return
+        }
+
+        if (mode === "coordinator") {
+          topbarTitleEl.textContent = "Coordinator"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          coordinatorViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderCoordinatorPanel()
           return
         }
 
