@@ -338,6 +338,44 @@
         background: rgba(255, 255, 255, 0.02);
       }
 
+      .genealogy-tree {
+        display: grid;
+        gap: 8px;
+      }
+
+      .genealogy-node {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 8px 10px;
+        display: grid;
+        gap: 4px;
+      }
+
+      .genealogy-node.root {
+        border-color: rgba(209, 163, 112, 0.28);
+        background: rgba(209, 163, 112, 0.1);
+      }
+
+      .genealogy-name {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .genealogy-meta {
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .genealogy-children {
+        margin-left: 14px;
+        padding-left: 10px;
+        border-left: 1px dashed var(--line);
+        display: grid;
+        gap: 7px;
+      }
+
       .tool-list {
         display: grid;
         gap: 8px;
@@ -1243,6 +1281,301 @@
         overflow: hidden;
       }
 
+      .family-view {
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 26px 24px 40px;
+      }
+
+      .panel-view {
+        height: 100%;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 26px 28px 40px;
+      }
+      .panel-view-inner {
+        width: min(100%, 720px);
+        margin: 0 auto;
+        display: grid;
+        gap: 14px;
+      }
+      .panel-view-title {
+        font-family: "Literata", serif;
+        font-size: clamp(22px, 3vw, 30px);
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+        margin-bottom: 4px;
+      }
+
+      /* ── Family Tree ──────────────────────────────────── */
+
+      .ft-root {
+        --ft-line: rgba(209, 163, 112, 0.5);
+        --ft-v: 28px;
+        width: min(100%, 1040px);
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .ft-head { display: grid; gap: 6px; }
+
+      .ft-title {
+        font-family: "Literata", serif;
+        font-size: clamp(22px, 3vw, 32px);
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+      }
+
+      .ft-subtitle {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      /* ── Tree diagram ─────────────────────────────────── */
+      .ft-tree {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        overflow-x: auto;
+        padding: 4px 16px 8px;
+      }
+
+      /* ── Level rows ──────────────────────────────────── */
+      .ft-ul {
+        list-style: none;
+        margin: 0;
+        padding: var(--ft-v) 0 0;
+        display: flex;
+        position: relative;
+      }
+
+      /* Vertical stem from parent into this row */
+      .ft-ul::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: var(--ft-v);
+        background: var(--ft-line);
+        border-radius: 2px;
+      }
+
+      /* Root row: stem handled by .ft-v-stem */
+      .ft-ul.ft-ul--root::before { display: none; }
+
+      .ft-ul.ft-ul--top::before { display: none; }
+
+      .ft-li.ft-li--rafaela {
+        z-index: 2;
+      }
+
+      .ft-li.ft-li--rafaela > .ft-ul.ft-ul--branch {
+        position: absolute;
+        top: calc(100% + 8px);
+        left: 50%;
+        transform: translateX(-14%);
+        min-width: max-content;
+      }
+
+      .ft-li.ft-li--rafaela > .ft-ul.ft-ul--branch::before {
+        left: 34%;
+      }
+
+      /* ── Individual items ────────────────────────────── */
+      .ft-li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--ft-v) 8px 0;
+        position: relative;
+      }
+
+      /* Horizontal bar segments */
+      .ft-li::before,
+      .ft-li::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        height: 2px;
+        background: var(--ft-line);
+        width: 50%;
+      }
+      .ft-li::before { right: 50%; }
+      .ft-li::after  { left:  50%; }
+
+      .ft-li:only-child::before,
+      .ft-li:only-child::after { display: none; }
+      .ft-li:first-child::before { opacity: 0; }
+      .ft-li:last-child::after   { opacity: 0; }
+
+      /* Vertical from horizontal bar down to node or couple */
+      .ft-li > .ft-node,
+      .ft-li > .ft-couple { position: relative; }
+
+      .ft-li > .ft-node::before,
+      .ft-li > .ft-couple::before {
+        content: "";
+        position: absolute;
+        top: calc(-1 * var(--ft-v));
+        left: 50%;
+        transform: translateX(-50%);
+        width: 2px;
+        height: var(--ft-v);
+        background: var(--ft-line);
+        border-radius: 2px;
+      }
+
+      /* ── Explicit vertical connector (root → children) ── */
+      .ft-v-stem {
+        width: 2px;
+        height: var(--ft-v);
+        background: var(--ft-line);
+        border-radius: 2px;
+      }
+
+      .ft-v-stem.ft-v-stem--main {
+        height: calc(var(--ft-v) * 6);
+        margin-top: 2px;
+      }
+
+      /* ── Node boxes ──────────────────────────────────── */
+      .ft-node {
+        border: 1px solid rgba(209, 163, 112, 0.35);
+        background: rgba(209, 163, 112, 0.08);
+        border-radius: 10px;
+        padding: 9px 14px;
+        text-align: center;
+        min-width: 84px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        white-space: nowrap;
+      }
+
+      .ft-node.ft-node--ancestor {
+        border-color: rgba(209, 163, 112, 0.55);
+        background: linear-gradient(180deg,
+          rgba(209, 163, 112, 0.22), rgba(209, 163, 112, 0.1));
+      }
+
+      .ft-node.ft-node--nucleus {
+        border-color: rgba(230, 185, 120, 0.6);
+        background: linear-gradient(180deg,
+          rgba(230, 185, 120, 0.25), rgba(230, 185, 120, 0.12));
+      }
+
+      .ft-node.ft-node--agent {
+        border-color: rgba(150, 176, 217, 0.45);
+        background: linear-gradient(180deg,
+          rgba(150, 176, 217, 0.2), rgba(150, 176, 217, 0.09));
+      }
+
+      .ft-node.ft-node--partner {
+        border-color: rgba(140, 200, 155, 0.4);
+        background: rgba(110, 170, 125, 0.09);
+      }
+
+      .ft-node.ft-node--wrap-meta {
+        white-space: normal;
+      }
+
+      .ft-node-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .ft-node--agent .ft-node-name { color: #dce8f8; }
+      .ft-node--partner .ft-node-name { color: #c8e8d0; }
+
+      .ft-node-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .ft-node.ft-node--wrap-meta .ft-node-meta {
+        max-width: 116px;
+        line-height: 1.24;
+      }
+
+      /* ── Couple pairing ──────────────────────────────── */
+      .ft-couple {
+        display: flex;
+        align-items: stretch;
+      }
+
+      .ft-couple-join {
+        display: flex;
+        align-items: center;
+        padding: 0 8px;
+        font-size: 14px;
+        color: rgba(209, 163, 112, 0.6);
+        border-top: 1px solid rgba(209, 163, 112, 0.25);
+        border-bottom: 1px solid rgba(209, 163, 112, 0.25);
+        background: rgba(209, 163, 112, 0.04);
+      }
+
+      /* ── Friends section ─────────────────────────────── */
+      .ft-friends {
+        border-top: 1px solid var(--line);
+        padding-top: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .ft-friends-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted-soft);
+      }
+
+      .ft-friends-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: flex-start;
+      }
+
+      .ft-friend {
+        border: 1px solid var(--line-soft);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.03);
+        padding: 8px 13px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .ft-friend-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .ft-friend-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .ft-friend-child {
+        margin-top: 5px;
+        padding-top: 6px;
+        border-top: 1px solid var(--line-soft);
+        font-size: 11px;
+        color: var(--muted);
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
       .messages {
         min-height: 0;
         overflow-y: auto;
@@ -1912,6 +2245,27 @@
           padding-right: 14px;
         }
 
+        .family-view {
+          padding: 16px 14px 22px;
+        }
+
+        .family-map-branches {
+          grid-template-columns: 1fr;
+        }
+
+        .family-map-core {
+          grid-template-columns: 1fr;
+        }
+
+        .family-map-root {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .family-branch-subgroups {
+          grid-template-columns: 1fr;
+        }
+
         .welcome-view {
           padding: 22px 14px;
         }
@@ -1938,6 +2292,172 @@
           border-radius: 15px;
           padding: 10px 12px;
         }
+      }
+
+      /* ── Swarm / Plugins / Monitor / Audit panels ── */
+      .swarm-team-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface-glass);
+        padding: 11px 13px;
+        display: grid;
+        gap: 6px;
+      }
+      .swarm-team-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .swarm-team-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .swarm-team-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+        margin-top: 3px;
+      }
+      .swarm-create-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .swarm-create-row input {
+        flex: 1 1 auto;
+        min-width: 0;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        color: var(--text);
+        padding: 7px 10px;
+        font-size: 12px;
+        outline: none;
+        transition: border-color 120ms;
+      }
+      .swarm-create-row input:focus {
+        border-color: rgba(212,167,118,0.44);
+        background: rgba(255,255,255,0.05);
+      }
+      .swarm-msg-area {
+        display: grid;
+        gap: 5px;
+        margin-top: 4px;
+      }
+      .swarm-msg-area textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        color: var(--text);
+        padding: 7px 10px;
+        font-size: 12px;
+        resize: vertical;
+        min-height: 56px;
+        outline: none;
+        box-sizing: border-box;
+        transition: border-color 120ms;
+      }
+      .swarm-msg-area textarea:focus {
+        border-color: rgba(212,167,118,0.44);
+        background: rgba(255,255,255,0.05);
+      }
+      .plugin-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--surface-glass);
+        padding: 11px 13px;
+        display: grid;
+        gap: 5px;
+      }
+      .plugin-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .plugin-card-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .plugin-card-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .plugin-toggle {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 11px;
+        background: rgba(255,255,255,0.03);
+        color: var(--muted);
+        cursor: pointer;
+        transition: background 120ms, color 120ms, border-color 120ms;
+      }
+      .plugin-toggle.active {
+        background: rgba(212,167,118,0.15);
+        color: var(--accent);
+        border-color: rgba(212,167,118,0.3);
+      }
+      .monitor-stat-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .monitor-stat {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface-glass);
+        padding: 10px 12px;
+        display: grid;
+        gap: 3px;
+      }
+      .monitor-stat-label {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .monitor-stat-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .monitor-stat-unit {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+      .audit-entry {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--surface-glass);
+        padding: 9px 12px;
+        display: grid;
+        gap: 3px;
+      }
+      .audit-entry-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+      .audit-entry-tool {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .audit-entry-time {
+        font-size: 11px;
+        color: var(--muted-soft);
+      }
+      .audit-entry-meta {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .audit-entry.ok .audit-entry-tool { color: #8fc48f; }
+      .audit-entry.err .audit-entry-tool { color: #c47b7b; }
+      .panel-refresh-row {
+        display: flex;
+        justify-content: flex-end;
       }
     </style>
   </head>
@@ -2029,6 +2549,19 @@
             </span>
             <span>Workflow</span>
           </button>
+          <button class="workspace-item" data-workspace="family" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="7" r="2.2"></circle>
+                <circle cx="7" cy="16" r="2"></circle>
+                <circle cx="17" cy="16" r="2"></circle>
+                <path d="M12 9.5v2.8"></path>
+                <path d="M12 12.3h-5"></path>
+                <path d="M12 12.3h5"></path>
+              </svg>
+            </span>
+            <span>Familia</span>
+          </button>
           <button class="workspace-item" data-workspace="settings" type="button">
             <span class="workspace-icon">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2044,6 +2577,50 @@
               </svg>
             </span>
             <span>Config</span>
+          </button>
+          <button class="workspace-item" data-workspace="swarm" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="5" cy="17" r="2"></circle>
+                <circle cx="19" cy="17" r="2"></circle>
+                <path d="M12 7v4"></path>
+                <path d="M12 11l-7 4"></path>
+                <path d="M12 11l7 4"></path>
+              </svg>
+            </span>
+            <span>Swarm</span>
+          </button>
+          <button class="workspace-item" data-workspace="plugins" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 2L3 7v5c0 5.25 3.75 10.15 9 11.35C17.25 22.15 21 17.25 21 12V7z"></path>
+                <path d="M9 12l2 2 4-4"></path>
+              </svg>
+            </span>
+            <span>Plugins</span>
+          </button>
+          <button class="workspace-item" data-workspace="monitor" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="14" rx="2"></rect>
+                <path d="M8 20h8"></path>
+                <path d="M12 18v2"></path>
+                <path d="M6 9l3 3 3-3 3 3 3-3"></path>
+              </svg>
+            </span>
+            <span>Monitor</span>
+          </button>
+          <button class="workspace-item" data-workspace="audit" type="button">
+            <span class="workspace-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M14 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V10z"></path>
+                <path d="M14 3v7h7"></path>
+                <path d="M8 13h8"></path>
+                <path d="M8 17h5"></path>
+              </svg>
+            </span>
+            <span>Audit</span>
           </button>
         </div>
 
@@ -2141,6 +2718,23 @@
               </div>
             </div>
           </div>
+
+          <div class="view family-view" id="family-view" hidden>
+            <div class="family-map-shell" id="family-map"></div>
+          </div>
+
+          <div class="view panel-view" id="swarm-view" hidden>
+            <div class="panel-view-inner" id="swarm-view-inner"></div>
+          </div>
+          <div class="view panel-view" id="plugins-view" hidden>
+            <div class="panel-view-inner" id="plugins-view-inner"></div>
+          </div>
+          <div class="view panel-view" id="monitor-view" hidden>
+            <div class="panel-view-inner" id="monitor-view-inner"></div>
+          </div>
+          <div class="view panel-view" id="audit-view" hidden>
+            <div class="panel-view-inner" id="audit-view-inner"></div>
+          </div>
         </div>
       </main>
     </div>
@@ -2220,6 +2814,16 @@
       const topbarTitleEl = document.getElementById("topbar-title")
       const welcomeViewEl = document.getElementById("welcome-view")
       const chatViewEl = document.getElementById("chat-view")
+      const familyViewEl = document.getElementById("family-view")
+      const familyMapEl = document.getElementById("family-map")
+      const swarmViewEl = document.getElementById("swarm-view")
+      const swarmViewInnerEl = document.getElementById("swarm-view-inner")
+      const pluginsViewEl = document.getElementById("plugins-view")
+      const pluginsViewInnerEl = document.getElementById("plugins-view-inner")
+      const monitorViewEl = document.getElementById("monitor-view")
+      const monitorViewInnerEl = document.getElementById("monitor-view-inner")
+      const auditViewEl = document.getElementById("audit-view")
+      const auditViewInnerEl = document.getElementById("audit-view-inner")
       const messagesInnerEl = document.getElementById("messages-inner")
       const statusEl = document.getElementById("status")
       const welcomePromptEl = document.getElementById("welcome-prompt")
@@ -2281,6 +2885,45 @@
       const MAX_ATTACHMENT_BYTES = 1024 * 1024
       const ALLOWED_ATTACHMENT_EXTENSIONS = [".txt", ".md", ".json", ".js", ".ts", ".tsx", ".jsx", ".css", ".html", ".yml", ".yaml"]
       const IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
+      const FAMILY_MAP_MODEL = {
+        core: [
+          { name: "Betinha", meta: "Nucleo da familia" },
+          { name: "Chocks", meta: "" },
+        ],
+        family: {
+          title: "Familia da Betinha",
+          sections: [
+            {
+              title: "Sogros do Chocks",
+              members: [
+                { name: "Valdinei", meta: "Sogro" },
+                { name: "Rafaela", meta: "Sogrinha" },
+              ],
+            },
+            {
+              title: "Irmaos da Betinha",
+              members: [
+                { name: "Pimpim", meta: "Irmao" },
+                { name: "Bento", meta: "Irmao" },
+                { name: "Kitty", meta: "Irma" },
+              ],
+            },
+          ],
+        },
+        branches: [
+          {
+            title: "Relacionamentos",
+            members: [
+              { name: "Pimpim + Isa", meta: "Casal" },
+              { name: "Kitty + Fabinho", meta: "Casal" },
+            ],
+          },
+          {
+            title: "Amiguinhos",
+            members: [],
+          },
+        ],
+      }
 
       function loadSettings() {
         try {
@@ -2660,6 +3303,296 @@
           { title: "Permissoes", copy: settings.permissionMode === "auto" ? "Auto" : settings.permissionMode === "read_only" ? "Read-only" : "Ask", chips: ["seguranca"] },
           { title: "Acesso total", copy: settings.fullAccess ? "Ativado" : "Desativado", chips: ["sistema"] },
         ]
+      }
+
+      function renderFamilyPanel() {
+        sidebarPanelEl.innerHTML = `
+          <div class="panel-card">
+            <div class="panel-card-title">Mapa da familia da Betinha</div>
+            <div class="panel-card-copy">Use o painel principal para ver a arvore completa.</div>
+          </div>
+        `
+      }
+
+      function renderFamilyMainView() {
+        if (!familyMapEl) return
+
+        // ── SVG-based tree renderer ──────────────────────────────────────
+        // Node dimensions and spacing
+        const NW = 110   // node width
+        const NH = 52    // node height (2 lines)
+        const HGAP = 24  // horizontal gap between siblings
+        const VGAP = 60  // vertical gap between levels
+        const LINE = "rgba(209,163,112,0.55)"
+        const LW = 2
+
+        // Node spec: { id, label, meta, cls, children[], x, y, w }
+        // We compute layout in two passes: measure widths bottom-up, then assign x top-down.
+
+        function makeNode(id, label, meta, cls, children) {
+          return { id, label, meta, cls: cls || "", children: children || [] }
+        }
+
+        // Build tree structure
+        const tree = makeNode("root-couple", "Valdinei + Rafaela", "", "couple", [
+          // Left branch: children of the family
+          makeNode("family-branch", null, null, "ghost", [
+            makeNode("pimpim", "Pimpim", "Irmão", "default", [
+              makeNode("isa", "Isa", "Casal", "partner", []),
+              makeNode("repeteco", "Repeteco", "Melhor amigo do Pimpim", "partner", []),
+            ]),
+            makeNode("bento", "Bento", "Irmão", "default", []),
+            makeNode("kitty", "Kitty", "Irmã", "default", [
+              makeNode("fabinho", "Fabinho", "Casal", "partner", []),
+            ]),
+            makeNode("betinha-chocks", "Betinha + Chocks", "Núcleo da família", "nucleus", []),
+          ]),
+          // Right branch: Jorginho (funcionário da Rafaela)
+          makeNode("jorginho", "Jorginho", "Funcionário da sogrinha", "default", [
+            makeNode("tunico", "Tunico", "Filho do Jorginho", "partner", []),
+          ]),
+        ])
+
+        // ── Layout engine ─────────────────────────────────────────────────
+        // Recursively compute subtree width
+        function subtreeWidth(node) {
+          if (node.cls === "ghost") {
+            // ghost is just a pass-through grouping for horizontal layout
+            const total = node.children.reduce((s, c) => s + subtreeWidth(c), 0)
+            return total + Math.max(0, node.children.length - 1) * HGAP
+          }
+          if (node.children.length === 0) return NW
+          const childrenW = node.children.reduce((s, c) => s + subtreeWidth(c), 0)
+                          + Math.max(0, node.children.length - 1) * HGAP
+          return Math.max(NW, childrenW)
+        }
+
+        // Assign x (center of each node), y, collect all nodes
+        const allNodes = []
+        const allEdges = [] // { x1,y1,x2,y2 }
+
+        function layout(node, cx, cy) {
+          if (node.cls === "ghost") {
+            // ghost: distribute children horizontally, no box
+            const totalW = subtreeWidth(node)
+            let childX = cx - totalW / 2
+            node.children.forEach((child) => {
+              const cw = subtreeWidth(child)
+              layout(child, childX + cw / 2, cy)
+              childX += cw + HGAP
+            })
+            return
+          }
+
+          node.x = cx
+          node.y = cy
+          node.w = NW
+          allNodes.push(node)
+
+          if (node.children.length === 0) return
+
+          const childY = cy + NH + VGAP
+          const totalW = node.children.reduce((s, c) => s + subtreeWidth(c), 0)
+                       + Math.max(0, node.children.length - 1) * HGAP
+          let childX = cx - totalW / 2
+
+          node.children.forEach((child) => {
+            const cw = subtreeWidth(child)
+            const ccx = childX + cw / 2
+            layout(child, ccx, childY)
+            // Edge from bottom-center of parent to top-center of child
+            // (for ghost children, edge to first real child center handled after)
+            if (child.cls !== "ghost") {
+              allEdges.push({ x1: cx, y1: cy + NH, x2: ccx, y2: childY })
+            } else {
+              // edges from parent to each grandchild
+              child.children.forEach((gc) => {
+                if (gc.x !== undefined) {
+                  allEdges.push({ x1: cx, y1: cy + NH, x2: gc.x, y2: gc.y })
+                }
+              })
+            }
+            childX += cw + HGAP
+          })
+        }
+
+        // Root: split into two top-level branches side by side
+        // First pass: compute widths
+        const leftBranch  = tree.children[0]  // ghost family
+        const rightBranch = tree.children[1]  // Jorginho
+
+        const leftW  = subtreeWidth(leftBranch)
+        const rightW = subtreeWidth(rightBranch)
+        const totalTopW = leftW + rightW + HGAP * 4
+        const svgPad = 32
+        const svgW = totalTopW + svgPad * 2
+
+        // Root couple node sits above the midpoint of left branch
+        const leftCx  = svgPad + leftW / 2
+        const rightCx = svgPad + leftW + HGAP * 4 + rightW / 2
+
+        // Root couple Y
+        const rootY = svgPad
+        const rootCx = (leftCx + rightCx) / 2
+
+        // layout root
+        const rootNode = { id: "root-couple", label: "Valdinei  +  Rafaela", meta: "Sogros", cls: "ancestor", children: [], x: rootCx, y: rootY, w: NW + 60 }
+        allNodes.push(rootNode)
+
+        // Layout left branch children (level 2)
+        const level2Y = rootY + NH + VGAP
+        let lx = svgPad
+        leftBranch.children.forEach((child) => {
+          const cw = subtreeWidth(child)
+          const ccx = lx + cw / 2
+          layout(child, ccx, level2Y)
+          lx += cw + HGAP
+        })
+
+        // Connect root to each level-2 left child with a branching connector
+        const leftChildren = leftBranch.children.filter(c => c.x !== undefined)
+        if (leftChildren.length > 0) {
+          const minX = Math.min(...leftChildren.map(c => c.x))
+          const maxX = Math.max(...leftChildren.map(c => c.x))
+          const barY = level2Y - VGAP / 2
+          // vertical from root down to bar
+          allEdges.push({ x1: rootCx, y1: rootY + NH, x2: rootCx, y2: barY, noCorner: true })
+          // horizontal bar
+          allEdges.push({ x1: minX, y1: barY, x2: maxX, y2: barY, noCorner: true })
+          // verticals from bar down to each child
+          leftChildren.forEach(c => {
+            allEdges.push({ x1: c.x, y1: barY, x2: c.x, y2: c.y, noCorner: true })
+          })
+        }
+
+        // Layout Jorginho branch
+        layout(rightBranch, rightCx, level2Y)
+        // Connect root to Jorginho
+        allEdges.push({ x1: rootCx, y1: rootY + NH, x2: rightCx, y2: level2Y, elbow: true })
+
+        // SVG height: deepest node bottom + padding
+        const maxY = allNodes.reduce((m, n) => Math.max(m, n.y + NH), 0)
+        const svgH = maxY + svgPad
+
+        // ── Render SVG ────────────────────────────────────────────────────
+        function nodeRect(node) {
+          const nw = node.w || NW
+          return { x: node.x - nw / 2, y: node.y, w: nw, h: NH }
+        }
+
+        function nodeCls(cls) {
+          const map = {
+            ancestor: "rgba(209,163,112,0.22)",
+            nucleus:  "rgba(230,185,120,0.22)",
+            partner:  "rgba(110,170,125,0.09)",
+            default:  "rgba(209,163,112,0.08)",
+          }
+          const borders = {
+            ancestor: "rgba(209,163,112,0.55)",
+            nucleus:  "rgba(230,185,120,0.6)",
+            partner:  "rgba(140,200,155,0.4)",
+            default:  "rgba(209,163,112,0.35)",
+          }
+          return { fill: map[cls] || map.default, stroke: borders[cls] || borders.default }
+        }
+
+        // Build elbow path: parent bottom → corner → child top
+        function elbowPath(x1, y1, x2, y2) {
+          const my = (y1 + y2) / 2
+          return `M${x1},${y1} L${x1},${my} L${x2},${my} L${x2},${y2}`
+        }
+
+        // Straight path (used for bar segments)
+        function straightPath(x1, y1, x2, y2) {
+          return `M${x1},${y1} L${x2},${y2}`
+        }
+
+        let svgPaths = ""
+        // Draw edges that came from recursive layout (child connections)
+        allEdges.forEach(e => {
+          const d = e.elbow
+            ? elbowPath(e.x1, e.y1, e.x2, e.y2)
+            : straightPath(e.x1, e.y1, e.x2, e.y2)
+          svgPaths += `<path d="${d}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+        })
+
+        // Also draw child-level edges (from layout recursive calls — already in allEdges)
+        // Draw child subtree edges for nodes that have children (non-ghost)
+        function drawSubEdges(node) {
+          if (!node.children || node.children.length === 0) return
+          const childrenReal = node.children.filter(c => c.x !== undefined)
+          if (childrenReal.length === 0) return
+
+          if (childrenReal.length === 1) {
+            const c = childrenReal[0]
+            svgPaths += `<path d="${straightPath(node.x, node.y + NH, c.x, c.y)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+          } else {
+            const minX = Math.min(...childrenReal.map(c => c.x))
+            const maxX = Math.max(...childrenReal.map(c => c.x))
+            const barY = childrenReal[0].y - VGAP / 2
+            svgPaths += `<path d="${straightPath(node.x, node.y + NH, node.x, barY)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+            svgPaths += `<path d="${straightPath(minX, barY, maxX, barY)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+            childrenReal.forEach(c => {
+              svgPaths += `<path d="${straightPath(c.x, barY, c.x, c.y)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+            })
+          }
+          childrenReal.forEach(c => drawSubEdges(c))
+        }
+
+        // Clear allEdges and re-draw everything cleanly via drawSubEdges
+        svgPaths = ""
+        // Root to left-branch children (horizontal bus)
+        if (leftChildren.length > 0) {
+          const minX = Math.min(...leftChildren.map(c => c.x))
+          const maxX = Math.max(...leftChildren.map(c => c.x))
+          const barY = level2Y - VGAP / 2
+          svgPaths += `<path d="${straightPath(rootCx, rootY + NH, rootCx, barY)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+          svgPaths += `<path d="${straightPath(minX, barY, maxX, barY)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+          leftChildren.forEach(c => {
+            svgPaths += `<path d="${straightPath(c.x, barY, c.x, c.y)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+          })
+        }
+
+        // Root to Jorginho: elbow
+        svgPaths += `<path d="${elbowPath(rootCx, rootY + NH, rightCx, level2Y)}" fill="none" stroke="${LINE}" stroke-width="${LW}" stroke-linecap="round"/>`
+
+        // Recurse for all level-2+ children
+        leftBranch.children.forEach(c => drawSubEdges(c))
+        drawSubEdges(rightBranch)
+
+        // Nodes as foreignObject
+        let svgNodes = ""
+        allNodes.forEach(node => {
+          const r  = nodeRect(node)
+          const cl = nodeCls(node.cls)
+          const nameColor = node.cls === "partner" ? "#c8e8d0" : "var(--text)"
+          svgNodes += `
+            <g>
+              <rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}"
+                rx="10" ry="10"
+                fill="${cl.fill}" stroke="${cl.stroke}" stroke-width="1"/>
+              <text x="${node.x}" y="${r.y + 21}" text-anchor="middle"
+                font-size="12" font-weight="600" fill="${nameColor}" font-family="inherit">${escapeHtml(node.label)}</text>
+              <text x="${node.x}" y="${r.y + 37}" text-anchor="middle"
+                font-size="10" fill="rgba(255,255,255,0.42)" font-family="inherit">${escapeHtml(node.meta || "")}</text>
+            </g>`
+        })
+
+        familyMapEl.innerHTML = `
+          <div class="ft-root">
+            <div class="ft-head">
+              <div class="ft-title">Árvore Genealógica</div>
+              <div class="ft-subtitle">Família da Betinha · hierarquia e conexões</div>
+            </div>
+            <div style="overflow-x:auto; padding: 4px 0 8px;">
+              <svg viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}"
+                style="display:block; min-width:${svgW}px; max-width:100%; font-family:inherit;">
+                ${svgPaths}
+                ${svgNodes}
+              </svg>
+            </div>
+          </div>
+        `
       }
 
       function getWorkflowProgress(workflow) {
@@ -4080,6 +5013,327 @@
       window.dismissPermissionRequest = dismissPermissionRequest
       window.triggerListingAction = triggerListingAction
 
+      // ── Swarm Panel ──────────────────────────────────────────────────────────
+      async function renderSwarmPanel() {
+        const panelEl = swarmViewInnerEl
+        if (!panelEl) return
+        panelEl.innerHTML = `<div class="panel-view-title">Agent Swarms</div><div class="sidebar-empty">Carregando times...</div>`
+
+        let teams = []
+        try {
+          const data = await fetch("/api/swarm/teams").then((r) => r.json())
+          teams = Array.isArray(data?.teams) ? data.teams : []
+        } catch {
+          panelEl.innerHTML = `<div class="sidebar-empty">Erro ao carregar times.</div>`
+          return
+        }
+
+        function buildSwarmHtml(teamList) {
+          const teamsHtml = teamList.length === 0
+            ? `<div class="sidebar-empty">Nenhum time criado ainda.</div>`
+            : teamList.map((team) => {
+                const agents = Array.isArray(team.agents) ? team.agents : []
+                const agentsHtml = agents.map((a) => `<span class="panel-chip">${escapeHtml(String(a.name || a))}</span>`).join("")
+                return `
+                  <div class="swarm-team-card">
+                    <div class="swarm-team-name">${escapeHtml(team.name || team.teamName || "Time")}</div>
+                    <div class="swarm-team-meta">${agents.length} agente(s)</div>
+                    ${agentsHtml ? `<div class="panel-chip-row">${agentsHtml}</div>` : ""}
+                    <div class="swarm-msg-area">
+                      <textarea placeholder="Mensagem para este time..." id="swarm-msg-${escapeHtml(team.name || team.teamName)}"></textarea>
+                    </div>
+                    <div class="swarm-team-actions">
+                      <button class="listing-action" type="button" data-swarm-send="${escapeHtml(team.name || team.teamName)}">Enviar</button>
+                      <button class="listing-action" type="button" data-swarm-shutdown="${escapeHtml(team.name || team.teamName)}">Encerrar</button>
+                    </div>
+                  </div>
+                `
+              }).join("")
+
+          return `
+            <div class="panel-card">
+              <div class="panel-card-title">Criar time</div>
+              <div class="swarm-create-row">
+                <input type="text" id="swarm-new-team-name" placeholder="Nome do time (ex.: dev-team)" />
+                <button class="listing-action" type="button" id="swarm-create-btn">Criar</button>
+              </div>
+            </div>
+            <div class="panel-refresh-row">
+              <button class="listing-action" type="button" id="swarm-refresh-btn">Atualizar</button>
+            </div>
+            ${teamsHtml}
+          `
+        }
+
+        panelEl.innerHTML = buildSwarmHtml(teams)
+
+        panelEl.querySelector("#swarm-create-btn")?.addEventListener("click", async () => {
+          const input = panelEl.querySelector("#swarm-new-team-name")
+          const teamName = input instanceof HTMLInputElement ? input.value.trim() : ""
+          if (!teamName) { showToast("Informe o nome do time"); return }
+          try {
+            await fetch("/api/swarm/teams", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ teamName }),
+            })
+            showToast(`Time "${teamName}" criado`)
+            renderSwarmPanel()
+          } catch { showToast("Erro ao criar time") }
+        })
+
+        panelEl.querySelector("#swarm-refresh-btn")?.addEventListener("click", () => renderSwarmPanel())
+
+        panelEl.querySelectorAll("[data-swarm-send]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const teamName = button.getAttribute("data-swarm-send")
+            const textarea = panelEl.querySelector(`#swarm-msg-${teamName}`)
+            const msg = textarea instanceof HTMLTextAreaElement ? textarea.value.trim() : ""
+            if (!msg) { showToast("Escreva uma mensagem"); return }
+            try {
+              await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/send-message`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ from: "coordinator", content: msg }),
+              })
+              if (textarea instanceof HTMLTextAreaElement) textarea.value = ""
+              showToast("Mensagem enviada")
+            } catch { showToast("Erro ao enviar") }
+          })
+        })
+
+        panelEl.querySelectorAll("[data-swarm-shutdown]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const teamName = button.getAttribute("data-swarm-shutdown")
+            if (!window.confirm(`Encerrar o time "${teamName}"?`)) return
+            try {
+              await fetch(`/api/swarm/teams/${encodeURIComponent(teamName)}/shutdown`, { method: "POST" })
+              showToast(`Time "${teamName}" encerrado`)
+              renderSwarmPanel()
+            } catch { showToast("Erro ao encerrar") }
+          })
+        })
+
+        syncNavButtons()
+      }
+
+      // ── Plugins Panel ─────────────────────────────────────────────────────────
+      async function renderPluginsPanel() {
+        const panelEl = pluginsViewInnerEl
+        if (!panelEl) return
+        panelEl.innerHTML = `<div class="sidebar-empty">Carregando plugins...</div>`
+
+        let plugins = []
+        try {
+          const data = await fetch("/plugins").then((r) => r.json())
+          plugins = Array.isArray(data?.plugins) ? data.plugins : []
+        } catch {
+          panelEl.innerHTML = `<div class="sidebar-empty">Erro ao carregar plugins.</div>`
+          return
+        }
+
+        const pluginsHtml = plugins.length === 0
+          ? `<div class="sidebar-empty">Nenhum plugin registrado.</div>`
+          : plugins.map((plugin) => {
+              const id = escapeHtml(String(plugin.id || plugin.name || ""))
+              const enabled = !!plugin.enabled
+              return `
+                <div class="plugin-card">
+                  <div class="plugin-card-header">
+                    <div class="plugin-card-name">${escapeHtml(plugin.name || plugin.id || "Plugin")}</div>
+                    <button class="plugin-toggle${enabled ? " active" : ""}" type="button" data-plugin-toggle="${id}" data-plugin-enabled="${enabled}">
+                      ${enabled ? "Ativo" : "Inativo"}
+                    </button>
+                  </div>
+                  ${plugin.description ? `<div class="plugin-card-meta">${escapeHtml(plugin.description)}</div>` : ""}
+                  ${plugin.version ? `<div class="plugin-card-meta">v${escapeHtml(plugin.version)}</div>` : ""}
+                </div>
+              `
+            }).join("")
+
+        panelEl.innerHTML = `
+          <div class="panel-refresh-row">
+            <button class="listing-action" type="button" id="plugins-refresh-btn">Atualizar</button>
+            <button class="listing-action" type="button" id="plugins-reload-btn" style="margin-left:6px">Recarregar disco</button>
+          </div>
+          ${pluginsHtml}
+        `
+
+        panelEl.querySelector("#plugins-refresh-btn")?.addEventListener("click", () => renderPluginsPanel())
+
+        panelEl.querySelector("#plugins-reload-btn")?.addEventListener("click", async () => {
+          try {
+            await fetch("/plugins/reload", { method: "POST" })
+            showToast("Plugins recarregados do disco")
+            renderPluginsPanel()
+          } catch { showToast("Erro ao recarregar plugins") }
+        })
+
+        panelEl.querySelectorAll("[data-plugin-toggle]").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const pluginId = button.getAttribute("data-plugin-toggle")
+            const isEnabled = button.getAttribute("data-plugin-enabled") === "true"
+            try {
+              await fetch(`/plugins/${encodeURIComponent(pluginId)}/enabled`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ enabled: !isEnabled }),
+              })
+              showToast(isEnabled ? "Plugin desativado" : "Plugin ativado")
+              renderPluginsPanel()
+            } catch { showToast("Erro ao alterar plugin") }
+          })
+        })
+
+        syncNavButtons()
+      }
+
+      // ── Monitor Panel ─────────────────────────────────────────────────────────
+      async function renderMonitorPanel() {
+        const panelEl = monitorViewInnerEl
+        if (!panelEl) return
+        panelEl.innerHTML = `<div class="sidebar-empty">Carregando métricas...</div>`
+
+        let cacheStats = null
+        let costs = []
+        try {
+          const [cacheData, costsData] = await Promise.all([
+            fetch("/api/cache/stats").then((r) => r.json()).catch(() => null),
+            fetch("/api/costs").then((r) => r.json()).catch(() => null),
+          ])
+          cacheStats = cacheData
+          costs = Array.isArray(costsData?.costs) ? costsData.costs : []
+        } catch { /* handled per-fetch */ }
+
+        const cacheHtml = cacheStats
+          ? `
+            <div class="panel-card">
+              <div class="panel-card-title">Cache de arquivos</div>
+              <div class="monitor-stat-row">
+                <div class="monitor-stat">
+                  <div class="monitor-stat-label">Entradas</div>
+                  <div class="monitor-stat-value">${escapeHtml(String(cacheStats.size ?? cacheStats.entries ?? "—"))}</div>
+                </div>
+                <div class="monitor-stat">
+                  <div class="monitor-stat-label">Capacidade</div>
+                  <div class="monitor-stat-value">${escapeHtml(String(cacheStats.max ?? cacheStats.maxSize ?? "—"))}</div>
+                </div>
+              </div>
+            </div>
+          `
+          : `<div class="sidebar-empty">Cache indisponível.</div>`
+
+        const totalCost = costs.reduce((sum, item) => sum + Number(item.cost_usd || item.cost || 0), 0)
+        const totalTokensIn = costs.reduce((sum, item) => sum + Number(item.input_tokens || item.prompt_tokens || 0), 0)
+        const totalTokensOut = costs.reduce((sum, item) => sum + Number(item.output_tokens || item.completion_tokens || 0), 0)
+
+        const costsHtml = `
+          <div class="panel-card">
+            <div class="panel-card-title">Custo total de tokens</div>
+            <div class="monitor-stat-row">
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Custo USD</div>
+                <div class="monitor-stat-value">$${totalCost.toFixed(4)}</div>
+              </div>
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Tokens entrada</div>
+                <div class="monitor-stat-value">${totalTokensIn.toLocaleString("pt-BR")}</div>
+              </div>
+            </div>
+            <div class="monitor-stat-row">
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Tokens saída</div>
+                <div class="monitor-stat-value">${totalTokensOut.toLocaleString("pt-BR")}</div>
+              </div>
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Registros</div>
+                <div class="monitor-stat-value">${costs.length}</div>
+              </div>
+            </div>
+          </div>
+        `
+
+        panelEl.innerHTML = `
+          <div class="panel-refresh-row">
+            <button class="listing-action" type="button" id="monitor-refresh-btn">Atualizar</button>
+          </div>
+          ${cacheHtml}
+          ${costsHtml}
+        `
+
+        panelEl.querySelector("#monitor-refresh-btn")?.addEventListener("click", () => renderMonitorPanel())
+
+        syncNavButtons()
+      }
+
+      // ── Audit Panel ───────────────────────────────────────────────────────────
+      async function renderAuditPanel() {
+        const panelEl = auditViewInnerEl
+        if (!panelEl) return
+        panelEl.innerHTML = `<div class="sidebar-empty">Carregando logs...</div>`
+
+        let entries = []
+        let stats = null
+        try {
+          const [recentData, statsData] = await Promise.all([
+            fetch("/audit/recent").then((r) => r.json()).catch(() => null),
+            fetch("/audit/stats").then((r) => r.json()).catch(() => null),
+          ])
+          entries = Array.isArray(recentData?.entries) ? recentData.entries
+            : Array.isArray(recentData?.logs) ? recentData.logs
+            : []
+          stats = statsData
+        } catch { /* handled per-fetch */ }
+
+        const statsHtml = stats ? `
+          <div class="panel-card">
+            <div class="panel-card-title">Estatísticas</div>
+            <div class="monitor-stat-row">
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Total ações</div>
+                <div class="monitor-stat-value">${escapeHtml(String(stats.total ?? "—"))}</div>
+              </div>
+              <div class="monitor-stat">
+                <div class="monitor-stat-label">Com erro</div>
+                <div class="monitor-stat-value">${escapeHtml(String(stats.errors ?? stats.failures ?? "—"))}</div>
+              </div>
+            </div>
+          </div>
+        ` : ""
+
+        const entriesHtml = entries.length === 0
+          ? `<div class="sidebar-empty">Nenhum log recente.</div>`
+          : entries.slice(0, 30).map((entry) => {
+              const ok = entry.ok !== false && !entry.error
+              const tool = escapeHtml(String(entry.tool || entry.action || entry.type || "ação"))
+              const chatId = escapeHtml(String(entry.chatId || entry.chat_id || ""))
+              const ts = entry.timestamp || entry.created_at || entry.createdAt || ""
+              const timeStr = ts ? escapeHtml(formatWorkflowDate(ts)) : ""
+              return `
+                <div class="audit-entry ${ok ? "ok" : "err"}">
+                  <div class="audit-entry-header">
+                    <div class="audit-entry-tool">${tool}</div>
+                    ${timeStr ? `<div class="audit-entry-time">${timeStr}</div>` : ""}
+                  </div>
+                  ${chatId ? `<div class="audit-entry-meta">Chat: ${chatId.slice(0, 20)}...</div>` : ""}
+                  ${entry.error ? `<div class="audit-entry-meta" style="color:#c47b7b">${escapeHtml(String(entry.error))}</div>` : ""}
+                </div>
+              `
+            }).join("")
+
+        panelEl.innerHTML = `
+          <div class="panel-refresh-row">
+            <button class="listing-action" type="button" id="audit-refresh-btn">Atualizar</button>
+          </div>
+          ${statsHtml}
+          <div style="display:grid;gap:6px">${entriesHtml}</div>
+        `
+
+        panelEl.querySelector("#audit-refresh-btn")?.addEventListener("click", () => renderAuditPanel())
+
+        syncNavButtons()
+      }
+
       function renderRecentList() {
         const chats = loadChats()
         const activeId = getActiveChatId()
@@ -4232,6 +5486,34 @@
         if (mode === "workflow") {
           sidebarSectionTitleEl.textContent = "Workflow"
           renderWorkflowPanel()
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "family") {
+          sidebarSectionTitleEl.textContent = "Familia"
+          sidebarPanelEl.innerHTML = ""
+          sidebarPanelEl.hidden = true
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "swarm") {
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "plugins") {
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "monitor") {
+          syncNavButtons()
+          return
+        }
+
+        if (mode === "audit") {
           syncNavButtons()
           return
         }
@@ -4770,19 +6052,84 @@
           })
       }
 
+      function hideAllMainViews() {
+        welcomeViewEl.hidden = true
+        chatViewEl.hidden = true
+        familyViewEl.hidden = true
+        swarmViewEl.hidden = true
+        pluginsViewEl.hidden = true
+        monitorViewEl.hidden = true
+        auditViewEl.hidden = true
+      }
+
       function renderApp() {
+        const mode = getWorkspaceMode()
+        if (mode === "family") {
+          topbarTitleEl.textContent = "Mapa da familia"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          familyViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderFamilyMainView()
+          return
+        }
+
+        if (mode === "swarm") {
+          topbarTitleEl.textContent = "Agent Swarms"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          swarmViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderSwarmPanel()
+          return
+        }
+
+        if (mode === "plugins") {
+          topbarTitleEl.textContent = "Plugins"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          pluginsViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderPluginsPanel()
+          return
+        }
+
+        if (mode === "monitor") {
+          topbarTitleEl.textContent = "Monitor"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          monitorViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderMonitorPanel()
+          return
+        }
+
+        if (mode === "audit") {
+          topbarTitleEl.textContent = "Audit"
+          shareButtonEl.hidden = true
+          hideAllMainViews()
+          auditViewEl.hidden = false
+          renderSidebarMode()
+          applySettingsToUi()
+          renderAuditPanel()
+          return
+        }
+
         const chat = getActiveChat()
         if (!chat) return
 
         const hasMessages = Array.isArray(chat.messages) && chat.messages.length > 0
         topbarTitleEl.textContent = chat.title || "Nova conversa"
         shareButtonEl.hidden = !hasMessages
+        hideAllMainViews()
         if (hasMessages) {
-          welcomeViewEl.hidden = true
           chatViewEl.hidden = false
         } else {
           welcomeViewEl.hidden = false
-          chatViewEl.hidden = true
         }
 
         renderSidebarMode()

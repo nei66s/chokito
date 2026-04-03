@@ -17,6 +17,7 @@ import {
   saveWorkflowState,
   updateTodo,
 } from './store.js'
+import { fileCache } from './llm.js'
 
 export type ToolResult = { ok: boolean; output?: any }
 
@@ -699,7 +700,14 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
     const rel = input?.path
     if (!rel) throw new Error('input.path required')
     const abs = assertAllowedPath(rel, context)
-    const data = await readTextFile(abs)
+    
+    // Try to get from cache first
+    let data = fileCache.get(abs)
+    if (!data) {
+      data = await readTextFile(abs)
+      fileCache.set(abs, data)
+    }
+    
     return { ok: true, output: data }
   }
 
@@ -716,6 +724,8 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
     } else {
       await fs.writeFile(abs, content, 'utf8')
     }
+    // Invalidate cache for this file since it was modified
+    fileCache.invalidate(abs)
     return { ok: true, output: { path: normalizedPath, bytes: content.length, append: !!input?.append } }
   }
 
@@ -730,6 +740,7 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
     const replaced = input?.replace_all ? original.split(find).join(replace) : original.replace(find, replace)
     if (replaced === original) return { ok: false, output: { changed: false } }
     await fs.writeFile(abs, replaced, 'utf8')
+    fileCache.invalidate(abs)
     return { ok: true, output: { changed: true, path: toDisplayPath(rel, context) } }
   }
 
@@ -740,6 +751,7 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
     const stat = await fs.stat(abs)
     if (!stat.isFile()) throw new Error('only files can be deleted with file_delete')
     await fs.unlink(abs)
+    fileCache.invalidate(abs)
     return { ok: true, output: { deleted: true, path: toDisplayPath(rel, context) } }
   }
 
@@ -753,6 +765,8 @@ export async function runTool(tool: string, input: any, context?: ToolContext): 
     await fs.stat(fromAbs)
     await fs.mkdir(path.dirname(toAbs), { recursive: true })
     await fs.rename(fromAbs, toAbs)
+    fileCache.invalidate(fromAbs)
+    fileCache.invalidate(toAbs)
     return {
       ok: true,
       output: {

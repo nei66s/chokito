@@ -4,8 +4,16 @@ import fs from 'fs/promises'
 import fssync from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { runAgent, streamAgent } from './llm.js'
-import { initDatabase } from './db.js'
+import { runAgent, streamAgent, tokenBudget, fileCache } from './llm.js'
+import {
+  initDatabase,
+  getConversationCosts,
+  saveCoordinatorTask,
+  saveCoordinatedSubtask,
+  getCoordinatorTasks,
+  getCoordinatedSubtasks,
+} from './db.js'
+import { Coordinator } from './coordinator/index.js'
 import {
   createConversation,
   deleteConversation,
@@ -49,6 +57,13 @@ const PLUGINS_ROOT = process.env.PLUGINS_ROOT
 const app = express()
 app.use(express.json())
 app.use(express.static(path.resolve(__dirname, '..', 'public')))
+
+// === Coordinator Instance ===
+const coordinator = new Coordinator({
+  maxWorkers: 6,
+  taskDecompositionTokenLimit: 2000,
+  routingStrategy: 'skill-match',
+})
 
 type RequestUser = {
   id: string
@@ -920,6 +935,590 @@ app.get('/files/raw', async (req: Request, res: Response) => {
     return res.status(500).json({ error: message })
   }
 })
+
+// ===== Fase 5: QueryEngine Endpoints =====
+
+// GET /api/cache/stats - Monitor file cache usage
+app.get('/api/cache/stats', (_req: Request, res: Response) => {
+  try {
+    const stats = fileCache.stats()
+    res.json({
+      cache: stats,
+      description: 'File content LRU cache statistics',
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/budget/:chatId - Get token budget progress
+app.get('/api/budget/:chatId', (req: Request, res: Response) => {
+  try {
+    const chatId = String(req.params.chatId || '').trim()
+    if (!chatId) return res.status(400).json({ error: 'chatId required' })
+
+    const budget = tokenBudget.getBudget(chatId)
+    if (!budget) {
+      return res.json({
+        chatId,
+        found: false,
+        message: 'No budget created yet for this chat',
+      })
+    }
+
+    const progress = tokenBudget.getProgress(chatId)
+    res.json({
+      chatId,
+      found: true,
+      budget: {
+        limit: budget.tokenLimit,
+        used: budget.tokenUsed,
+      },
+      progress,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/costs - Get token costs for a conversation
+app.get('/api/costs', async (req: Request, res: Response) => {
+  try {
+    const chatId = typeof req.query?.chatId === 'string' ? req.query.chatId : undefined
+    if (!chatId) {
+      return res.status(400).json({
+        error: 'chatId required as query parameter',
+        example: '/api/costs?chatId=conv-123',
+      })
+    }
+
+    const costs = await getConversationCosts(chatId)
+    res.json({
+      chatId,
+      costs,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// ===== Fase 6: Coordinator Mode Endpoints =====
+
+// POST /api/coordinator/orchestrate - Decompose and orchestrate complex task
+app.post('/api/coordinator/orchestrate', async (req: Request, res: Response) => {
+  try {
+    const { userMessage, chatId } = req.body
+    if (!userMessage) {
+      return res.status(400).json({ error: 'userMessage required' })
+    }
+
+    const conversationId = chatId || `coordinator-${Date.now()}`
+    console.log(`[Coordinator] Orchestrating: ${userMessage.substring(0, 50)}`)
+
+    const synthesis = await coordinator.orchestrateTask(userMessage, conversationId)
+
+    // Persist to database (async, non-blocking)
+    ;(async () => {
+      try {
+        // Get the most recent task that was created
+        const coordinatedTask = coordinator.getLastCoordinatedTask()
+        
+        if (coordinatedTask) {
+          // Save main task
+          await saveCoordinatorTask(
+            coordinatedTask.id,
+            conversationId,
+            userMessage,
+            synthesis,
+            'completed'
+          )
+
+          // Save all subtasks
+          for (const subtask of coordinatedTask.decomperatedSubtasks) {
+            await saveCoordinatedSubtask(
+              subtask.id,
+              coordinatedTask.id,
+              subtask.description,
+              subtask.assignedWorkerId,
+              subtask.status,
+              subtask.result,
+              subtask.error
+            )
+          }
+
+          console.log(`[Coordinator] Task ${coordinatedTask.id} persisted to database`)
+        }
+      } catch (dbError) {
+        console.error('[Coordinator] Database persistence error:', dbError instanceof Error ? dbError.message : String(dbError))
+      }
+    })()
+
+    res.json({
+      success: true,
+      conversationId,
+      synthesis,
+      message: 'Task orchestrated across specialized workers',
+    })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[Coordinator] Error:', message)
+    res.status(500).json({
+      success: false,
+      error: message,
+    })
+  }
+})
+
+// GET /api/coordinator/stats - Get coordinator statistics
+app.get('/api/coordinator/stats', (_req: Request, res: Response) => {
+  try {
+    const coordinatorStats = coordinator.getCoordinatorStats()
+    const workerPool = coordinator['workerPool']
+    const poolStats = workerPool.getPoolStats()
+    const routingStats = coordinator['router'].getRoutingStats()
+
+    res.json({
+      coordinator: coordinatorStats,
+      workerPool: poolStats,
+      routing: routingStats,
+      description: 'Coordinator and worker pool statistics',
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/coordinator/workers - List all workers and their status
+  // (supports fallback chains with retry logic)
+app.get('/api/coordinator/workers', (_req: Request, res: Response) => {
+  try {
+    const workerPool = coordinator['workerPool']
+    const workers = workerPool.getAllWorkers()
+
+    res.json({
+      workers: workers.map(w => ({
+        id: w.id,
+        name: w.name,
+        specialty: w.specialty,
+        isAvailable: w.isAvailable,
+        currentTask: w.currentTask,
+        skillset: w.skillset,
+      })),
+      count: workers.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/coordinator/tasks/:conversationId - Get task history for a conversation
+app.get('/api/coordinator/tasks/:conversationId', async (req: Request, res: Response) => {
+  try {
+    const conversationId = String(req.params.conversationId || '')
+    if (!conversationId) {
+      return res.status(400).json({ error: 'conversationId required' })
+    }
+
+    const tasks = await getCoordinatorTasks(conversationId)
+    res.json({
+      conversationId,
+      tasks,
+      count: tasks.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/coordinator/tasks/:conversationId/:taskId - Get subtasks for a task
+app.get('/api/coordinator/tasks/:conversationId/:taskId', async (req: Request, res: Response) => {
+  try {
+    const taskId = String(req.params.taskId || '')
+    if (!taskId) {
+      return res.status(400).json({ error: 'taskId required' })
+    }
+
+    const subtasks = await getCoordinatedSubtasks(taskId)
+    res.json({
+      taskId,
+      subtasks,
+      count: subtasks.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// ============ FASE 7: AGENT SWARMS ENDPOINTS ============
+
+import * as swarms from './swarm/index.js'
+
+// POST /api/swarm/teams - Create a new team
+app.post('/api/swarm/teams', async (req: Request, res: Response) => {
+  try {
+    const { name, description } = req.body
+    if (!name) {
+      return res.status(400).json({ error: 'Team name required' })
+    }
+
+    // Generate unique name if needed
+    const uniqueName = await swarms.generateUniqueName(name)
+    const config = await swarms.createTeam(uniqueName, description)
+
+    res.json({
+      success: true,
+      teamName: config.name,
+      leadAgentId: config.leadAgentId,
+      createdAt: config.createdAt,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/swarm/teams - List all teams
+app.get('/api/swarm/teams', async (req: Request, res: Response) => {
+  try {
+    const teams = await swarms.listTeams()
+    const teamConfigs = []
+
+    for (const teamName of teams) {
+      const config = await swarms.loadTeamConfig(teamName)
+      if (config) {
+        teamConfigs.push({
+          name: config.name,
+          description: config.description,
+          createdAt: config.createdAt,
+          leadAgentId: config.leadAgentId,
+          memberCount: config.members.length,
+          members: config.members.map((m) => ({
+            agentId: m.agentId,
+            name: m.name,
+            isActive: m.isActive,
+            backendType: m.backendType,
+          })),
+        })
+      }
+    }
+
+    res.json({
+      teams: teamConfigs,
+      count: teamConfigs.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// POST /api/swarm/teams/:teamName/spawn - Spawn a teammate
+app.post('/api/swarm/teams/:teamName/spawn', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+    const {
+      name,
+      model,
+      color,
+      permissionMode,
+      planModeRequired,
+      backendType,
+      cwd,
+      initialPrompt,
+    } = req.body
+
+    if (!name || !cwd || !initialPrompt) {
+      return res.status(400).json({
+        error: 'name, cwd, and initialPrompt required',
+      })
+    }
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    const member = await swarms.spawnTeammate({
+      name,
+      teamName,
+      model,
+      color,
+      permissionMode,
+      planModeRequired,
+      backendType: backendType as swarms.BackendType,
+      cwd,
+      initialPrompt,
+    })
+
+    res.json({
+      success: true,
+      agentId: member.agentId,
+      name: member.name,
+      backendType: member.backendType,
+      isActive: member.isActive,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// POST /api/swarm/teams/:teamName/send-message - Send message to teammate
+app.post('/api/swarm/teams/:teamName/send-message', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+    const { from, to, content } = req.body
+
+    if (!from || !to || !content) {
+      return res.status(400).json({
+        error: 'from, to, and content required',
+      })
+    }
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    const message = await swarms.sendDirectMessage(teamName, from, to, content)
+
+    res.json({
+      success: true,
+      messageId: message.id,
+      timestamp: message.timestamp,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// GET /api/swarm/teams/:teamName/mailbox/:agentName - Read mailbox for agent
+app.get('/api/swarm/teams/:teamName/mailbox/:agentName', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+    const agentName = String(req.params.agentName || '')
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    const messages = await swarms.readMailbox(teamName, agentName)
+
+    res.json({
+      teamName,
+      agentName,
+      messages,
+      count: messages.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// POST /api/swarm/teams/:teamName/shutdown - Shutdown entire team
+app.post('/api/swarm/teams/:teamName/shutdown', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    await swarms.shutdownTeam(teamName)
+
+    res.json({
+      success: true,
+      message: `Team ${teamName} shut down and deleted`,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// ============ FASE 7 SESSION 2: PERMISSION DELEGATION + PLAN MODE ============
+
+import * as swarmPerms from './swarm/permissions.js'
+import * as swarmPlans from './swarm/plans.js'
+
+// GET /api/swarm/teams/:teamName/permissions/pending - Leader check pending permissions
+app.get(
+  '/api/swarm/teams/:teamName/permissions/pending',
+  async (req: Request, res: Response) => {
+    try {
+      const teamName = String(req.params.teamName || '')
+
+      if (!(await swarms.teamExists(teamName))) {
+        return res.status(404).json({ error: `Team ${teamName} not found` })
+      }
+
+      const requests = await swarmPerms.getPendingPermissionRequests(teamName)
+
+      res.json({
+        teamName,
+        requests: requests.map((r) => ({
+          messageId: r.messageId,
+          workerName: r.workerName,
+          toolName: r.request.toolName,
+          reason: r.request.reason,
+          requestId: r.request.requestId,
+        })),
+        count: requests.length,
+      })
+    } catch (err) {
+      res.status(500).json({ error: String(err) })
+    }
+  },
+)
+
+// POST /api/swarm/teams/:teamName/permissions/approve - Leader approve permission
+app.post(
+  '/api/swarm/teams/:teamName/permissions/approve',
+  async (req: Request, res: Response) => {
+    try {
+      const teamName = String(req.params.teamName || '')
+      const { workerName, requestId, reason } = req.body
+
+      if (!workerName || !requestId) {
+        return res.status(400).json({ error: 'workerName and requestId required' })
+      }
+
+      if (!(await swarms.teamExists(teamName))) {
+        return res.status(404).json({ error: `Team ${teamName} not found` })
+      }
+
+      await swarmPerms.respondToPermissionRequest(
+        teamName,
+        workerName,
+        true,
+        requestId,
+        reason,
+      )
+
+      res.json({
+        success: true,
+        message: `Permission approved for ${workerName}`,
+      })
+    } catch (err) {
+      res.status(500).json({ error: String(err) })
+    }
+  },
+)
+
+// POST /api/swarm/teams/:teamName/permissions/deny - Leader deny permission
+app.post(
+  '/api/swarm/teams/:teamName/permissions/deny',
+  async (req: Request, res: Response) => {
+    try {
+      const teamName = String(req.params.teamName || '')
+      const { workerName, requestId, reason } = req.body
+
+      if (!workerName || !requestId) {
+        return res.status(400).json({ error: 'workerName and requestId required' })
+      }
+
+      if (!(await swarms.teamExists(teamName))) {
+        return res.status(404).json({ error: `Team ${teamName} not found` })
+      }
+
+      await swarmPerms.respondToPermissionRequest(
+        teamName,
+        workerName,
+        false,
+        requestId,
+        reason,
+      )
+
+      res.json({
+        success: true,
+        message: `Permission denied for ${workerName}`,
+      })
+    } catch (err) {
+      res.status(500).json({ error: String(err) })
+    }
+  },
+)
+
+// GET /api/swarm/teams/:teamName/plans/pending - Leader check pending plans
+app.get('/api/swarm/teams/:teamName/plans/pending', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    const requests = await swarmPlans.getPendingPlanApprovals(teamName)
+
+    res.json({
+      teamName,
+      plans: requests.map((r) => ({
+        messageId: r.messageId,
+        workerName: r.workerName,
+        planId: r.request.planId,
+        title: r.request.plan.title,
+        description: r.request.plan.description,
+        stepCount: r.request.plan.steps.length,
+      })),
+      count: requests.length,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// POST /api/swarm/teams/:teamName/plans/approve - Leader approve plan
+app.post('/api/swarm/teams/:teamName/plans/approve', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+    const { workerName, planId, feedback } = req.body
+
+    if (!workerName || !planId) {
+      return res.status(400).json({ error: 'workerName and planId required' })
+    }
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    await swarmPlans.respondToPlanApproval(teamName, workerName, planId, true, feedback)
+
+    res.json({
+      success: true,
+      message: `Plan approved for ${workerName}`,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+// POST /api/swarm/teams/:teamName/plans/reject - Leader reject plan
+app.post('/api/swarm/teams/:teamName/plans/reject', async (req: Request, res: Response) => {
+  try {
+    const teamName = String(req.params.teamName || '')
+    const { workerName, planId, feedback, requestedChanges } = req.body
+
+    if (!workerName || !planId) {
+      return res.status(400).json({ error: 'workerName and planId required' })
+    }
+
+    if (!(await swarms.teamExists(teamName))) {
+      return res.status(404).json({ error: `Team ${teamName} not found` })
+    }
+
+    await swarmPlans.respondToPlanApproval(
+      teamName,
+      workerName,
+      planId,
+      false,
+      feedback,
+      requestedChanges,
+    )
+
+    res.json({
+      success: true,
+      message: `Plan rejected for ${workerName}`,
+    })
+  } catch (err) {
+    res.status(500).json({ error: String(err) })
+  }
+})
+
+export { coordinator }
 
 const port = process.env.PORT || 3000
 
